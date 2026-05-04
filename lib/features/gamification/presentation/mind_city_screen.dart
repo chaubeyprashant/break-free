@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:mukti/core/providers/game_provider.dart';
+import 'package:break_free/core/providers/game_provider.dart';
 
 class MindCityScreen extends StatelessWidget {
   const MindCityScreen({super.key});

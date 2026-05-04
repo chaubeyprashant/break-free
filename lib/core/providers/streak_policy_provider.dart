@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mukti/core/data/streak_policy_repository.dart';
-import 'package:mukti/core/models/streak_policy.dart';
+import 'package:break_free/core/data/streak_policy_repository.dart';
+import 'package:break_free/core/models/streak_policy.dart';
 
 class StreakPolicyProvider extends ChangeNotifier {
   final StreakPolicyRepository _repository;

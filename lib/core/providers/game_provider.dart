@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mukti/core/data/game_repository.dart';
-import 'package:mukti/core/models/user_progress.dart';
+import 'package:break_free/core/data/game_repository.dart';
+import 'package:break_free/core/models/user_progress.dart';
 
 class GameProvider extends ChangeNotifier {
   final GameRepository _repository;

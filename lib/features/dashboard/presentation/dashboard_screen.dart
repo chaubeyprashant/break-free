@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:mukti/core/providers/habit_provider.dart';
-import 'package:mukti/core/providers/game_provider.dart';
-import 'package:mukti/core/providers/streak_policy_provider.dart';
-import 'package:mukti/core/theme/app_theme.dart';
-import 'package:mukti/core/models/streak_milestone.dart';
-import 'package:mukti/core/models/habit.dart';
-import 'package:mukti/features/gamification/presentation/level_up_overlay.dart';
+import 'package:break_free/core/providers/habit_provider.dart';
+import 'package:break_free/core/providers/game_provider.dart';
+import 'package:break_free/core/providers/streak_policy_provider.dart';
+import 'package:break_free/core/theme/app_theme.dart';
+import 'package:break_free/core/models/streak_milestone.dart';
+import 'package:break_free/core/models/habit.dart';
+import 'package:break_free/features/gamification/presentation/level_up_overlay.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});

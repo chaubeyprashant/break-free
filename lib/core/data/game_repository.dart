@@ -1,5 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mukti/core/models/user_progress.dart';
+import 'package:break_free/core/models/user_progress.dart';
 
 class GameRepository {
   static const String _progressKey = 'user_progress';

@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:mukti/core/theme/app_theme.dart';
-import 'package:mukti/core/router/app_router.dart';
-import 'package:mukti/features/dashboard/data/streak_repository.dart';
-import 'package:mukti/features/dashboard/presentation/streak_provider.dart';
-import 'package:mukti/core/providers/habit_provider.dart';
-import 'package:mukti/core/data/habit_repository.dart';
-import 'package:mukti/core/providers/game_provider.dart';
-import 'package:mukti/core/data/game_repository.dart';
-import 'package:mukti/core/data/streak_policy_repository.dart';
-import 'package:mukti/core/providers/streak_policy_provider.dart';
+import 'package:break_free/core/theme/app_theme.dart';
+import 'package:break_free/core/router/app_router.dart';
+import 'package:break_free/features/dashboard/data/streak_repository.dart';
+import 'package:break_free/features/dashboard/presentation/streak_provider.dart';
+import 'package:break_free/core/providers/habit_provider.dart';
+import 'package:break_free/core/data/habit_repository.dart';
+import 'package:break_free/core/providers/game_provider.dart';
+import 'package:break_free/core/data/game_repository.dart';
+import 'package:break_free/core/data/streak_policy_repository.dart';
+import 'package:break_free/core/providers/streak_policy_provider.dart';
 
 void main() {
-  runApp(const MuktiApp());
+  runApp(const BreakFreeApp());
 }
 
-class MuktiApp extends StatelessWidget {
-  const MuktiApp({super.key});
+class BreakFreeApp extends StatelessWidget {
+  const BreakFreeApp({super.key});
 
   @override
   Widget build(BuildContext context) {

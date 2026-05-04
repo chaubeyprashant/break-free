@@ -1,15 +1,15 @@
 import 'package:go_router/go_router.dart';
-import 'package:mukti/features/dashboard/presentation/dashboard_screen.dart';
-import 'package:mukti/features/panic_mode/presentation/panic_mode_screen.dart';
-import 'package:mukti/features/subscription/presentation/subscription_screen.dart';
-import 'package:mukti/features/onboarding/presentation/onboarding_screen.dart';
-import 'package:mukti/features/onboarding/presentation/habit_selection_screen.dart';
+import 'package:break_free/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:break_free/features/panic_mode/presentation/panic_mode_screen.dart';
+import 'package:break_free/features/subscription/presentation/subscription_screen.dart';
+import 'package:break_free/features/onboarding/presentation/onboarding_screen.dart';
+import 'package:break_free/features/onboarding/presentation/habit_selection_screen.dart';
 
-import 'package:mukti/features/gamification/presentation/mind_city_screen.dart';
-import 'package:mukti/features/gamification/presentation/bubble_popper_game.dart';
-import 'package:mukti/features/recovery/presentation/relapse_screen.dart';
-import 'package:mukti/features/journal/presentation/reflection_screen.dart';
-import 'package:mukti/features/settings/presentation/settings_screen.dart';
+import 'package:break_free/features/gamification/presentation/mind_city_screen.dart';
+import 'package:break_free/features/gamification/presentation/bubble_popper_game.dart';
+import 'package:break_free/features/recovery/presentation/relapse_screen.dart';
+import 'package:break_free/features/journal/presentation/reflection_screen.dart';
+import 'package:break_free/features/settings/presentation/settings_screen.dart';
 
 final router = GoRouter(
   initialLocation:

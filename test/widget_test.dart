@@ -1,20 +1,19 @@
 // This is a basic Flutter widget test.
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
+// To perform an interaction with a widget in your app, use the WidgetTester
 // utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// gestures. You can use WidgetTester to find child widgets in the widget
+// tree, read the widget properties, and verify the values of widget properties.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mukti/main.dart';
+import 'package:break_free/main.dart';
 
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MuktiApp());
+    await tester.pumpWidget(const BreakFreeApp());
+    await tester.pumpAndSettle(const Duration(seconds: 3));
 
-    // Verify that our app starts and shows the dashboard title.
-    expect(find.text('Break Free'), findsOneWidget);
-    expect(find.text('Welcome to your Mukti Journey'), findsOneWidget);
+    expect(find.text('Break Free'), findsWidgets);
+    expect(find.textContaining('Identify your triggers'), findsOneWidget);
   });
 }

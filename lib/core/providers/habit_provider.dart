@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mukti/core/data/habit_repository.dart';
-import 'package:mukti/core/models/habit.dart';
+import 'package:break_free/core/data/habit_repository.dart';
+import 'package:break_free/core/models/habit.dart';
 
 class HabitProvider extends ChangeNotifier {
   final HabitRepository _repository;

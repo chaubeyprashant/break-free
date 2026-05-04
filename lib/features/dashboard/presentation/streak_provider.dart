@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mukti/features/dashboard/data/streak_repository.dart';
+import 'package:break_free/features/dashboard/data/streak_repository.dart';
 
 class StreakProvider extends ChangeNotifier {
   final StreakRepository _repository;

@@ -1,5 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mukti/core/models/streak_policy.dart';
+import 'package:break_free/core/models/streak_policy.dart';
 
 class StreakPolicyRepository {
   static const String _key = 'streak_policy';

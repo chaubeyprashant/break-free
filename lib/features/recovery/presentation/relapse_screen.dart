@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:mukti/core/providers/habit_provider.dart';
-import 'package:mukti/core/providers/game_provider.dart';
-import 'package:mukti/core/providers/streak_policy_provider.dart';
-import 'package:mukti/core/models/habit.dart';
+import 'package:break_free/core/providers/habit_provider.dart';
+import 'package:break_free/core/providers/game_provider.dart';
+import 'package:break_free/core/providers/streak_policy_provider.dart';
+import 'package:break_free/core/models/habit.dart';
 
 class RelapseScreen extends StatefulWidget {
   final String? habitId;

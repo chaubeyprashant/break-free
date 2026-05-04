@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:mukti/core/providers/habit_provider.dart';
+import 'package:break_free/core/providers/habit_provider.dart';
 
 class ReflectionScreen extends StatelessWidget {
   const ReflectionScreen({super.key});

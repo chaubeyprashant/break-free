@@ -1,16 +1,14 @@
-# mukti
+# Break Free
 
-A new Flutter project.
+Gamified self-control coach (Flutter). Dart package name: `break_free`.
 
-## Getting Started
+## Run
 
-This project is a starting point for a Flutter application.
+```bash
+flutter pub get
+flutter run
+```
 
-A few resources to get you started if this is your first Flutter project:
+## Android package ID
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+`app.breakfree.mobile` — update Play Console if you previously used `app.mukti.breakfree` (treated as a different app).

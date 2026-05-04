@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mukti/core/models/habit.dart';
+import 'package:break_free/core/models/habit.dart';
 
 class HabitRepository {
   static const String _habitsKey = 'habits_data';
