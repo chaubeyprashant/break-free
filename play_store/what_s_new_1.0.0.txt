@@ -1,0 +1,11 @@
+Welcome to Break Free 1.0.
+
+• Track habits and build streaks
+• Protect streaks with Freezes and Streak Shield (Level 3+)
+• Earn XP and coins; level up from Beginner to Hero
+• Streak milestones at 3, 7, 14, 30+ days
+• Log slips with triggers; confirm before resetting
+• Panic button, Mind City, and Journal
+• New launcher icon (adaptive on Android) and refreshed UI
+
+Thanks for trying Break Free.
