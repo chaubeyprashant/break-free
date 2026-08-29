@@ -39,7 +39,7 @@ class LevelUpOverlay extends StatelessWidget {
                     borderRadius: BorderRadius.circular(28),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF2A9D8F).withOpacity(0.5),
+                        color: const Color(0xFF2A9D8F).withValues(alpha: 0.5),
                         blurRadius: 24,
                         spreadRadius: 2,
                       ),

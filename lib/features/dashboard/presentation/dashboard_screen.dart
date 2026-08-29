@@ -1,29 +1,92 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:break_free/core/providers/habit_provider.dart';
+import 'package:provider/provider.dart';
+
+import 'package:break_free/core/data/activity_log_repository.dart';
+import 'package:break_free/core/data/check_in_repository.dart';
+import 'package:break_free/core/models/activity_event.dart';
 import 'package:break_free/core/providers/game_provider.dart';
-import 'package:break_free/core/providers/streak_policy_provider.dart';
-import 'package:break_free/core/theme/app_theme.dart';
-import 'package:break_free/core/models/streak_milestone.dart';
-import 'package:break_free/core/models/habit.dart';
 import 'package:break_free/features/gamification/presentation/level_up_overlay.dart';
 
-class DashboardScreen extends StatelessWidget {
+import '../domain/entities/dashboard_stats_entity.dart';
+import '../domain/entities/activity_entity.dart';
+import 'providers/dashboard_provider.dart';
+import 'widgets/stat_card.dart';
+import 'widgets/progress_chart.dart';
+import 'widgets/activity_list_item.dart';
+
+/// Reward for completing a day. Levelling costs `level * 100` XP, so this is
+/// roughly five clean days to reach level 2.
+const int _checkInXp = 20;
+const int _checkInCoins = 5;
+
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  bool _isCheckingIn = false;
+
+  @override
   Widget build(BuildContext context) {
+    final dashboardState = ref.watch(dashboardProvider);
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _buildHeader(context)),
-            SliverToBoxAdapter(child: _buildStreakProtectionBar(context)),
-            SliverToBoxAdapter(child: _buildHabitList(context)),
-          ],
+        child: RefreshIndicator(
+          onRefresh: () => ref.read(dashboardProvider.notifier).refresh(),
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(context),
+                      const SizedBox(height: 24),
+                      dashboardState.when(
+                        data: (data) => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildCheckInCard(context, data.stats),
+                            const SizedBox(height: 12),
+                            _buildSlipLink(context),
+                            const SizedBox(height: 24),
+                            _buildStatsGrid(context, data.stats),
+                            const SizedBox(height: 24),
+                            ProgressChart(weeklyData: data.stats.weeklyProgressXP),
+                            const SizedBox(height: 24),
+                            _buildRecentActivities(context, data.recentActivities),
+                            // Clearance for the floating Panic Button.
+                            const SizedBox(height: 88),
+                          ],
+                        ),
+                        loading: () => const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(40.0),
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
+                        error: (err, stack) => Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Text('Error: $err', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: _buildNavBar(context),
@@ -37,13 +100,312 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  /// The daily action. Everything else on this screen is a consequence of it.
+  Widget _buildCheckInCard(BuildContext context, DashboardStatsEntity stats) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    if (stats.hasCheckedInToday) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: colorScheme.primaryContainer.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.check_circle_rounded, color: colorScheme.primary, size: 32),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Checked in today',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '+$_checkInXp XP earned. See you tomorrow.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface.withValues(alpha: 0.7),
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ).animate().fadeIn().slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [colorScheme.primary, colorScheme.secondary],
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'How did today go?',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Check in to keep your streak moving.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onPrimary.withValues(alpha: 0.85),
+                ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _isCheckingIn ? null : _handleCheckIn,
+              style: FilledButton.styleFrom(
+                backgroundColor: colorScheme.onPrimary,
+                foregroundColor: colorScheme.primary,
+                minimumSize: const Size(double.infinity, 52),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              icon: _isCheckingIn
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.check_rounded),
+              label: const Text('I stayed on track today'),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn().slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic);
+  }
+
+  /// Deliberately quiet: logging a slip should never feel like a dare.
+  Widget _buildSlipLink(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        onPressed: _openRelapseFlow,
+        icon: Icon(
+          Icons.refresh_rounded,
+          size: 18,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+        ),
+        label: Text(
+          'Had a slip? Log it',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleCheckIn() async {
+    setState(() => _isCheckingIn = true);
+
+    final checkIns = context.read<CheckInRepository>();
+    final activityLog = context.read<ActivityLogRepository>();
+    final game = context.read<GameProvider>();
+
+    try {
+      final recorded = await checkIns.recordCheckIn(
+        when: DateTime.now(),
+        xp: _checkInXp,
+      );
+      if (!recorded) return; // Already checked in today; never award twice.
+
+      final levelledUp = await game.addXp(_checkInXp, coinBonus: _checkInCoins);
+      await activityLog.record(
+        ActivityEvent.now(
+          type: ActivityEvent.checkIn,
+          title: 'Checked in',
+          description: 'Stayed on track (+$_checkInXp XP)',
+        ),
+      );
+      if (levelledUp) {
+        await activityLog.record(
+          ActivityEvent.now(
+            type: ActivityEvent.achievement,
+            title: 'Level Up!',
+            description: 'Reached level ${game.progress.level} — ${game.progress.levelTitle}',
+          ),
+        );
+      }
+
+      await ref.read(dashboardProvider.notifier).refresh();
+      if (!mounted) return;
+
+      if (levelledUp) {
+        await _showLevelUp(game);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Nice work. +$_checkInXp XP'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCheckingIn = false);
+    }
+  }
+
+  Future<void> _showLevelUp(GameProvider game) async {
+    await showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      pageBuilder: (dialogContext, animation, secondaryAnimation) => LevelUpOverlay(
+        newLevel: game.progress.level,
+        levelTitle: game.progress.levelTitle,
+        onDismiss: () => Navigator.of(dialogContext).pop(),
+      ),
+    );
+  }
+
+  Future<void> _openRelapseFlow() async {
+    await context.push('/relapse');
+    if (!mounted) return;
+    await ref.read(dashboardProvider.notifier).refresh();
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Welcome Back,',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+            ),
+            Text(
+              'Hero', // Ideally fetch from AuthProvider
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ],
+        ),
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            shape: BoxShape.circle,
+          ),
+          child: const Center(
+            child: Text('🦸', style: TextStyle(fontSize: 28)),
+          ),
+        ),
+      ],
+    ).animate().fadeIn().slideY(begin: -0.1, end: 0, curve: Curves.easeOutCubic);
+  }
+
+  Widget _buildStatsGrid(BuildContext context, DashboardStatsEntity stats) {
+    return GridView.count(
+      crossAxisCount: 2,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      childAspectRatio: 1.1,
+      children: [
+        StatCard(
+          title: 'Current Streak',
+          value: _formatStreak(stats),
+          icon: Icons.local_fire_department_rounded,
+          color: Colors.orange,
+        ),
+        StatCard(
+          title: 'Total Check-ins',
+          value: '${stats.totalCheckIns}',
+          icon: Icons.check_circle_rounded,
+          color: Colors.green,
+        ),
+        StatCard(
+          title: 'Shields',
+          value: '${stats.shieldsAvailable}',
+          icon: Icons.shield_rounded,
+          color: Colors.blue,
+        ),
+        StatCard(
+          title: 'Coins',
+          value: '${stats.totalCoins}',
+          icon: Icons.monetization_on_rounded,
+          color: Colors.amber,
+        ),
+      ],
+    ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic);
+  }
+
+  /// Day one is counted in hours — "0 Days" is the wrong thing to show
+  /// someone who is a few hours into this.
+  String _formatStreak(DashboardStatsEntity stats) {
+    if (stats.currentStreak < 1) {
+      final hours = stats.currentStreakHours;
+      return hours == 1 ? '1 Hour' : '$hours Hours';
+    }
+    return stats.currentStreak == 1 ? '1 Day' : '${stats.currentStreak} Days';
+  }
+
+  Widget _buildRecentActivities(
+    BuildContext context,
+    List<ActivityEntity> activities,
+  ) {
+    if (activities.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20.0),
+        child: Text(
+          'Your check-ins and milestones will show up here.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Recent Activity',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        const SizedBox(height: 12),
+        ...activities.map((activity) => ActivityListItem(activity: activity)),
+      ],
+    ).animate().fadeIn(delay: 200.ms);
+  }
+
   Widget _buildNavBar(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -65,544 +427,6 @@ class DashboardScreen extends StatelessWidget {
           NavigationDestination(icon: Icon(Icons.book_rounded), label: 'Journal'),
           NavigationDestination(icon: Icon(Icons.settings_rounded), label: 'Settings'),
         ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Consumer<GameProvider>(
-      builder: (context, gameProvider, child) {
-        final progress = gameProvider.progress;
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Container(
-          margin: const EdgeInsets.all(20),
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? [
-                      AppTheme.primaryDark.withOpacity(0.9),
-                      const Color(0xFF2A9D8F),
-                    ]
-                  : [
-                      const Color(0xFF1A535C),
-                      const Color(0xFF2A9D8F),
-                    ],
-            ),
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primary.withOpacity(0.35),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        progress.levelTitle,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Colors.white.withOpacity(0.9),
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                      Text(
-                        'Level ${progress.level}',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        const Text('🪙', style: TextStyle(fontSize: 18)),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${progress.coins}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 28),
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: 120,
-                    height: 120,
-                    child: CircularProgressIndicator(
-                      value: progress.xp / progress.xpToNextLevel,
-                      strokeWidth: 8,
-                      backgroundColor: Colors.white.withOpacity(0.25),
-                      color: const Color(0xFFFFD700),
-                      strokeCap: StrokeCap.round,
-                    ),
-                  ),
-                  Container(
-                    width: 88,
-                    height: 88,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Text('🦸', style: TextStyle(fontSize: 44)),
-                    ),
-                  )
-                      .animate()
-                      .scale(
-                        duration: 600.ms,
-                        curve: Curves.easeOutBack,
-                      ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                '${progress.xp} / ${progress.xpToNextLevel} XP',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.9),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ).animate().fadeIn().slideY(begin: -0.05, end: 0, curve: Curves.easeOutCubic);
-      },
-    );
-  }
-
-  Widget _buildStreakProtectionBar(BuildContext context) {
-    return Consumer<StreakPolicyProvider>(
-      builder: (context, policyProvider, _) {
-        if (policyProvider.freezesRemaining == 0 && policyProvider.shieldsRemaining == 0) {
-          return const SizedBox.shrink();
-        }
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            children: [
-              if (policyProvider.freezesRemaining > 0)
-                _ProtectionChip(
-                  icon: Icons.ac_unit_rounded,
-                  label: '${policyProvider.freezesRemaining} freeze',
-                ),
-              if (policyProvider.freezesRemaining > 0 && policyProvider.shieldsRemaining > 0)
-                const SizedBox(width: 10),
-              if (policyProvider.shieldsRemaining > 0)
-                _ProtectionChip(
-                  icon: Icons.shield_rounded,
-                  label: '${policyProvider.shieldsRemaining} shield',
-                ),
-            ],
-          ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05, end: 0),
-        );
-      },
-    );
-  }
-
-  Widget _buildHabitList(BuildContext context) {
-    return Consumer<HabitProvider>(
-      builder: (context, habitProvider, child) {
-        final habits = habitProvider.habits;
-        if (habits.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.all(40),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'No habits set yet.',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 12),
-                FilledButton.icon(
-                  onPressed: () => context.push('/habit-selection'),
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text('Add Habits'),
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Today',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-              ),
-              const SizedBox(height: 12),
-              ...habits.asMap().entries.map((entry) {
-                final index = entry.key;
-                final habit = entry.value;
-                final milestone = StreakMilestone.reached(habit.currentStreakDays);
-                final nextMilestone = StreakMilestone.next(habit.currentStreakDays);
-                return _HabitCard(
-                  key: ValueKey(habit.id),
-                  habit: habit,
-                  milestone: milestone,
-                  nextMilestone: nextMilestone,
-                  onCheckIn: () => _onCheckIn(context, habit.id),
-                  onSlip: () => _showHabitOptions(context, habit.id),
-                )
-                    .animate()
-                    .fadeIn(delay: (80 * index).ms)
-                    .slideX(begin: 0.04, end: 0, delay: (80 * index).ms, curve: Curves.easeOutCubic);
-              }),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _onCheckIn(BuildContext context, String habitId) async {
-    final gameProvider = context.read<GameProvider>();
-    final leveledUp = await gameProvider.addXp(25, coinBonus: 5);
-    if (!context.mounted) return;
-    // Success animation: show brief overlay then level-up if applicable
-    await _showCheckInSuccess(context);
-    if (!context.mounted) return;
-    if (leveledUp) {
-      await _showLevelUpOverlay(context);
-    }
-  }
-
-  Future<void> _showCheckInSuccess(BuildContext context) async {
-    await showDialog(
-      context: context,
-      barrierColor: Colors.black38,
-      builder: (ctx) => _CheckInSuccessOverlay(onDismiss: () => Navigator.of(ctx).pop()),
-    );
-  }
-
-  Future<void> _showLevelUpOverlay(BuildContext context) async {
-    final progress = context.read<GameProvider>().progress;
-    await showDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierColor: Colors.transparent,
-      builder: (ctx) => LevelUpOverlay(
-        newLevel: progress.level,
-        levelTitle: progress.levelTitle,
-        onDismiss: () => Navigator.of(ctx).pop(),
-      ),
-    );
-  }
-
-  void _showHabitOptions(BuildContext context, String habitId) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 26),
-              ),
-              title: const Text('Check-in (Clean Day)'),
-              subtitle: const Text('+25 XP, +5 coins'),
-              onTap: () {
-                Navigator.pop(context);
-                _onCheckIn(context, habitId);
-              },
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-            const SizedBox(height: 8),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.broken_image_rounded, color: Colors.red, size: 26),
-              ),
-              title: const Text('I Slipped (Log Relapse)'),
-              onTap: () {
-                Navigator.pop(context);
-                context.push('/relapse', extra: habitId);
-              },
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ProtectionChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _ProtectionChip({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HabitCard extends StatelessWidget {
-  final Habit habit;
-  final StreakMilestone? milestone;
-  final StreakMilestone? nextMilestone;
-  final VoidCallback onCheckIn;
-  final VoidCallback onSlip;
-
-  const _HabitCard({
-    super.key,
-    required this.habit,
-    required this.milestone,
-    required this.nextMilestone,
-    required this.onCheckIn,
-    required this.onSlip,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.12),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onSlip,
-          borderRadius: BorderRadius.circular(22),
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Theme.of(context).colorScheme.primaryContainer,
-                        Theme.of(context).colorScheme.primaryContainer.withOpacity(0.7),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(habit.iconPath, style: const TextStyle(fontSize: 28)),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        habit.title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.local_fire_department_rounded,
-                            size: 18,
-                            color: Colors.orange.shade700,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${habit.currentStreakDays} day streak',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Colors.orange.shade700,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                          if (milestone != null) ...[
-                            const SizedBox(width: 8),
-                            Text(
-                              milestone!.emoji,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ],
-                        ],
-                      ),
-                      if (nextMilestone != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          '${nextMilestone!.days - habit.currentStreakDays} days to ${nextMilestone!.emoji} ${nextMilestone!.label}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                              ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                IconButton.filled(
-                  onPressed: onCheckIn,
-                  icon: const Icon(Icons.check_rounded, size: 26),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.green.shade600,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.all(12),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CheckInSuccessOverlay extends StatefulWidget {
-  final VoidCallback onDismiss;
-
-  const _CheckInSuccessOverlay({required this.onDismiss});
-
-  @override
-  State<_CheckInSuccessOverlay> createState() => _CheckInSuccessOverlayState();
-}
-
-class _CheckInSuccessOverlayState extends State<_CheckInSuccessOverlay> {
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (mounted) widget.onDismiss();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      child: Dialog(
-        backgroundColor: Colors.transparent,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                color: Colors.green.shade600,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.green.withOpacity(0.5),
-                    blurRadius: 24,
-                    spreadRadius: 4,
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.check_rounded, size: 64, color: Colors.white),
-            )
-                .animate()
-                .scale(begin: const Offset(0, 0), end: const Offset(1, 1), curve: Curves.elasticOut, duration: 500.ms),
-            const SizedBox(height: 20),
-            Text(
-              '+25 XP',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1)),
-            Text(
-              'Great job!',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
-            ).animate().fadeIn(delay: 300.ms),
-          ],
-        ),
       ),
     );
   }

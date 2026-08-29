@@ -38,4 +38,8 @@ class StreakProvider extends ChangeNotifier {
   void refresh() {
     _updateDuration();
   }
+
+  Future<void> reload() async {
+    await _loadStreak();
+  }
 }

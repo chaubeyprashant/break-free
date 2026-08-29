@@ -1,14 +1,23 @@
-import 'dart:convert';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
-class UserProgress {
-  int xp;
-  int level;
-  int coins;
-  // TODO: Add avatar customization fields later
+part 'user_progress.freezed.dart';
+part 'user_progress.g.dart';
 
-  UserProgress({this.xp = 0, this.level = 1, this.coins = 0});
+@freezed
+abstract class UserProgress with _$UserProgress {
+  const UserProgress._();
 
-  // Simple leveling logic: Level * 100 XP required for next level
+  @HiveType(typeId: 1, adapterName: 'UserProgressAdapter')
+  const factory UserProgress({
+    @HiveField(0) @Default(0) int xp,
+    @HiveField(1) @Default(1) int level,
+    @HiveField(2) @Default(0) int coins,
+  }) = _UserProgress;
+
+  factory UserProgress.fromJson(Map<String, dynamic> json) =>
+      _$UserProgressFromJson(json);
+
   int get xpToNextLevel => level * 100;
 
   static const List<String> levelTitles = [
@@ -24,35 +33,27 @@ class UserProgress {
     'Hero of Break Free',
   ];
 
-  String get levelTitle => level <= levelTitles.length ? levelTitles[level - 1] : levelTitles.last;
+  String get levelTitle =>
+      level <= levelTitles.length ? levelTitles[level - 1] : levelTitles.last;
 
-  void addXp(int amount) {
-    xp += amount;
-    while (xp >= xpToNextLevel) {
-      xp -= xpToNextLevel;
-      level++;
-      coins += 10;
+  // With Freezed, we return a new instance instead of mutating
+  UserProgress addXp(int amount) {
+    int newXp = xp + amount;
+    int newLevel = level;
+    int newCoins = coins;
+    
+    int xpRequired = newLevel * 100;
+    while (newXp >= xpRequired) {
+      newXp -= xpRequired;
+      newLevel++;
+      newCoins += 10;
+      xpRequired = newLevel * 100; // update required xp for next iteration
     }
+    
+    return copyWith(xp: newXp, level: newLevel, coins: newCoins);
   }
 
-  void addCoins(int amount) {
-    coins += amount;
+  UserProgress addCoins(int amount) {
+    return copyWith(coins: coins + amount);
   }
-
-  Map<String, dynamic> toMap() {
-    return {'xp': xp, 'level': level, 'coins': coins};
-  }
-
-  factory UserProgress.fromMap(Map<String, dynamic> map) {
-    return UserProgress(
-      xp: map['xp'] ?? 0,
-      level: map['level'] ?? 1,
-      coins: map['coins'] ?? 0,
-    );
-  }
-
-  String toJson() => json.encode(toMap());
-
-  factory UserProgress.fromJson(String source) =>
-      UserProgress.fromMap(json.decode(source));
 }

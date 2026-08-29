@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:break_free/core/data/activity_log_repository.dart';
+import 'package:break_free/core/data/relapse_log_repository.dart';
+import 'package:break_free/core/models/activity_event.dart';
+import 'package:break_free/core/models/relapse_record.dart';
 import 'package:break_free/core/providers/habit_provider.dart';
 import 'package:break_free/core/providers/game_provider.dart';
 import 'package:break_free/core/providers/streak_policy_provider.dart';
 import 'package:break_free/core/models/habit.dart';
+import 'package:break_free/features/dashboard/presentation/streak_provider.dart';
 
 class RelapseScreen extends StatefulWidget {
   final String? habitId;
@@ -17,6 +22,7 @@ class RelapseScreen extends StatefulWidget {
 
 class _RelapseScreenState extends State<RelapseScreen> {
   String? _selectedTrigger;
+  String? _selectedHabitId;
   final List<String> _commonTriggers = [
     'Stress',
     'Boredom',
@@ -26,12 +32,33 @@ class _RelapseScreenState extends State<RelapseScreen> {
     'Other',
   ];
 
+  /// The habit this slip belongs to: the one we were routed with, the one the
+  /// user picked, or the only one they track.
+  String? _resolveHabitId(List<Habit> habits) {
+    if (widget.habitId != null) return widget.habitId;
+    if (_selectedHabitId != null) return _selectedHabitId;
+    if (habits.length == 1) return habits.first.id;
+    return null;
+  }
+
+  Habit? _habitById(List<Habit> habits, String? id) {
+    if (id == null) return null;
+    final matches = habits.where((h) => h.id == id);
+    return matches.isEmpty ? null : matches.first;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final habits = context.watch<HabitProvider>().habits;
+    final habitId = _resolveHabitId(habits);
+    final needsHabitChoice = widget.habitId == null && habits.length > 1;
+    final canLog =
+        _selectedTrigger != null && (habits.isEmpty || habitId != null);
+
     return Scaffold(
       backgroundColor: const Color(0xFF0D1117),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -62,6 +89,28 @@ class _RelapseScreenState extends State<RelapseScreen> {
                 textAlign: TextAlign.center,
               ).animate().fadeIn(delay: 200.ms),
               const SizedBox(height: 40),
+              if (needsHabitChoice) ...[
+                Text(
+                  'Which habit?',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: habits.map((habit) {
+                    return _SelectableChip(
+                      label: '${habit.iconPath} ${habit.title}',
+                      isSelected: habitId == habit.id,
+                      onTap: () => setState(
+                        () => _selectedHabitId =
+                            habitId == habit.id ? null : habit.id,
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 32),
+              ],
               Text(
                 'What triggered you?',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
@@ -71,34 +120,21 @@ class _RelapseScreenState extends State<RelapseScreen> {
                 spacing: 10,
                 runSpacing: 10,
                 children: _commonTriggers.map((trigger) {
-                  final isSelected = _selectedTrigger == trigger;
-                  return Material(
-                    color: isSelected ? const Color(0xFF238636) : Colors.white.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(20),
-                    child: InkWell(
-                      onTap: () => setState(() => _selectedTrigger = isSelected ? null : trigger),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Text(
-                          trigger,
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.white70,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                          ),
-                        ),
-                      ),
+                  return _SelectableChip(
+                    label: trigger,
+                    isSelected: _selectedTrigger == trigger,
+                    onTap: () => setState(
+                      () => _selectedTrigger =
+                          _selectedTrigger == trigger ? null : trigger,
                     ),
                   );
                 }).toList(),
               ),
-              const Spacer(),
-              _buildProtectionOptions(context),
+              const SizedBox(height: 40),
+              _buildProtectionOptions(context, habits, habitId),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _selectedTrigger == null
-                    ? null
-                    : () => _onLogRelapse(context),
+                onPressed: canLog ? () => _onLogRelapse(context, habits, habitId) : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.black,
@@ -120,14 +156,14 @@ class _RelapseScreenState extends State<RelapseScreen> {
     );
   }
 
-  Widget _buildProtectionOptions(BuildContext context) {
-    return Consumer3<StreakPolicyProvider, GameProvider, HabitProvider>(
-      builder: (context, policyProvider, gameProvider, habitProvider, _) {
-        Habit? habit;
-        if (widget.habitId != null) {
-          final list = habitProvider.habits.where((h) => h.id == widget.habitId).toList();
-          habit = list.isEmpty ? null : list.first;
-        }
+  Widget _buildProtectionOptions(
+    BuildContext context,
+    List<Habit> habits,
+    String? habitId,
+  ) {
+    return Consumer2<StreakPolicyProvider, GameProvider>(
+      builder: (context, policyProvider, gameProvider, _) {
+        final habit = _habitById(habits, habitId);
         final streakDays = habit?.currentStreakDays ?? 0;
         final level = gameProvider.progress.level;
         final canFreeze = policyProvider.canUseFreeze;
@@ -166,10 +202,19 @@ class _RelapseScreenState extends State<RelapseScreen> {
   void _useProtection(BuildContext context, {bool useFreeze = false, bool useShield = false}) async {
     final policyProvider = context.read<StreakPolicyProvider>();
     final gameProvider = context.read<GameProvider>();
+    final activityLog = context.read<ActivityLogRepository>();
 
     if (useFreeze) {
       final ok = await policyProvider.useFreeze();
-      if (context.mounted && ok) {
+      if (!ok) return;
+      await activityLog.record(
+        ActivityEvent.now(
+          type: ActivityEvent.achievement,
+          title: 'Streak frozen',
+          description: 'Used a freeze to protect your streak',
+        ),
+      );
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Freeze used. Your streak is safe.'),
@@ -181,7 +226,15 @@ class _RelapseScreenState extends State<RelapseScreen> {
       }
     } else if (useShield) {
       final ok = await policyProvider.useShield(gameProvider.progress.level);
-      if (context.mounted && ok) {
+      if (!ok) return;
+      await activityLog.record(
+        ActivityEvent.now(
+          type: ActivityEvent.achievement,
+          title: 'Shield used',
+          description: 'Streak protected',
+        ),
+      );
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Shield used. Streak protected.'),
@@ -194,14 +247,17 @@ class _RelapseScreenState extends State<RelapseScreen> {
     }
   }
 
-  Future<void> _onLogRelapse(BuildContext context) async {
+  Future<void> _onLogRelapse(
+    BuildContext context,
+    List<Habit> habits,
+    String? habitId,
+  ) async {
     final habitProvider = context.read<HabitProvider>();
-    final habitId = widget.habitId;
-    Habit? habit;
-    if (habitId != null) {
-      final list = habitProvider.habits.where((h) => h.id == habitId).toList();
-      habit = list.isEmpty ? null : list.first;
-    }
+    final streakProvider = context.read<StreakProvider>();
+    final activityLog = context.read<ActivityLogRepository>();
+    final relapseLog = context.read<RelapseLogRepository>();
+
+    final habit = _habitById(habits, habitId);
     final streakDays = habit?.currentStreakDays ?? 0;
 
     final confirm = await showDialog<bool>(
@@ -215,7 +271,7 @@ class _RelapseScreenState extends State<RelapseScreen> {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         content: Text(
-          'This will reset your $streakDays day streak for this habit. You can\'t undo this.',
+          'This restarts your $streakDays day streak. Your level, XP and coins stay with you.',
           style: TextStyle(color: Colors.white70, height: 1.4),
         ),
         actions: [
@@ -232,11 +288,32 @@ class _RelapseScreenState extends State<RelapseScreen> {
       ),
     );
 
-    if (confirm != true || !context.mounted) return;
+    if (confirm != true) return;
 
     if (habitId != null) {
       await habitProvider.logRelapse(habitId);
     }
+    // The dashboard streak counts from this moment too, or it would keep
+    // climbing after a slip the user just told us about.
+    await streakProvider.resetStreak();
+    await activityLog.record(
+      ActivityEvent.now(
+        type: ActivityEvent.relapse,
+        title: 'Logged a slip',
+        description: habit == null
+            ? 'Trigger: $_selectedTrigger'
+            : '${habit.title} — trigger: $_selectedTrigger',
+      ),
+    );
+    // Structured copy, so the Journal can find patterns in it later.
+    await relapseLog.record(
+      RelapseRecord.now(
+        trigger: _selectedTrigger ?? '',
+        habitId: habitId,
+        habitTitle: habit?.title,
+      ),
+    );
+
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -246,6 +323,40 @@ class _RelapseScreenState extends State<RelapseScreen> {
       );
       context.pop();
     }
+  }
+}
+
+class _SelectableChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _SelectableChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: isSelected ? const Color(0xFF238636) : Colors.white.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.white70,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -259,7 +370,7 @@ class _ProtectionChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withOpacity(0.06),
+      color: Colors.white.withValues(alpha: 0.06),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,

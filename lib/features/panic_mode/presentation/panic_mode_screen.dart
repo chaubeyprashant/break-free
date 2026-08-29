@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:just_audio/just_audio.dart';
 
 class PanicModeScreen extends StatefulWidget {
@@ -52,7 +53,7 @@ class _PanicModeScreenState extends State<PanicModeScreen> {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                         Colors.transparent,
                       ],
                       stops: const [0.7, 1.0],
@@ -69,7 +70,7 @@ class _PanicModeScreenState extends State<PanicModeScreen> {
                           BoxShadow(
                             color: Theme.of(
                               context,
-                            ).colorScheme.primary.withOpacity(0.5),
+                            ).colorScheme.primary.withValues(alpha: 0.5),
                             blurRadius: 20,
                             spreadRadius: 2,
                           ),
@@ -107,12 +108,12 @@ class _PanicModeScreenState extends State<PanicModeScreen> {
                 color: const Color(0xFF1A1A1A), // Dark surface
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.error.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.error.withValues(alpha: 0.5),
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -144,7 +145,7 @@ class _PanicModeScreenState extends State<PanicModeScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'Relapsing restarts the cycle of:',
-                    style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
                   ),
                   const SizedBox(height: 12),
                   _buildConsequenceRow(context, '🧠 Brain Fog & Fatigue'),
@@ -176,6 +177,16 @@ class _PanicModeScreenState extends State<PanicModeScreen> {
               },
             ),
             const Text('Guided Audio', style: TextStyle(color: Colors.white54)),
+            const SizedBox(height: 24),
+            // If the urge already won, logging it should be one quiet tap away
+            // rather than something the user has to go hunting for.
+            TextButton(
+              onPressed: () => context.push('/relapse'),
+              child: const Text(
+                'Had a slip? Log it',
+                style: TextStyle(color: Colors.white38),
+              ),
+            ),
           ],
         ),
       ),

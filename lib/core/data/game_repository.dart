@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'package:break_free/core/models/user_progress.dart';
 
 class GameRepository {
@@ -6,7 +7,7 @@ class GameRepository {
 
   Future<void> saveProgress(UserProgress progress) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_progressKey, progress.toJson());
+    await prefs.setString(_progressKey, jsonEncode(progress.toJson()));
   }
 
   Future<UserProgress> getProgress() async {
@@ -15,6 +16,6 @@ class GameRepository {
     if (encoded == null) {
       return UserProgress(); // Return default starting state
     }
-    return UserProgress.fromJson(encoded);
+    return UserProgress.fromJson(jsonDecode(encoded));
   }
 }

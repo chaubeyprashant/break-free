@@ -20,10 +20,15 @@ class GameProvider extends ChangeNotifier {
   /// Returns true if user leveled up. Optionally add coins (e.g. for check-in).
   Future<bool> addXp(int amount, {int coinBonus = 0}) async {
     final levelBefore = _progress.level;
-    _progress.addXp(amount);
-    if (coinBonus > 0) _progress.addCoins(coinBonus);
+    // UserProgress is immutable (Freezed): these return new instances.
+    _progress = _progress.addXp(amount);
+    if (coinBonus > 0) _progress = _progress.addCoins(coinBonus);
     await _repository.saveProgress(_progress);
     notifyListeners();
     return _progress.level > levelBefore;
+  }
+
+  Future<void> refresh() async {
+    await _loadProgress();
   }
 }

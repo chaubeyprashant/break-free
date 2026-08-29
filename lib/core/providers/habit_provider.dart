@@ -69,4 +69,8 @@ class HabitProvider extends ChangeNotifier {
       await _loadHabits();
     }
   }
+
+  Future<void> refresh() async {
+    await _loadHabits();
+  }
 }
