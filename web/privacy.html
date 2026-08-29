@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Privacy Policy for Break Free: Gamified Self-Control App. Learn how we handle, retain, and delete your data.">
+  <title>Privacy Policy — Break Free</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #0b1315;
+      --card-bg: #142124;
+      --text-color: #e0ebeb;
+      --text-muted: #8ea3a6;
+      --primary-color: #1a8f9c;
+      --primary-hover: #24b0c0;
+      --accent-color: #ff6b6b;
+      --border-color: rgba(255, 255, 255, 0.05);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 3rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--primary-color), #48cae4);
+    }
+
+    header {
+      margin-bottom: 3rem;
+      text-align: center;
+    }
+
+    .app-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.025em;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .last-updated {
+      display: inline-block;
+      margin-top: 0.5rem;
+      padding: 0.25rem 0.75rem;
+      background: rgba(26, 143, 156, 0.15);
+      color: #48cae4;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 2.5rem 0;
+    }
+
+    section {
+      margin-bottom: 2.5rem;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    h2 svg {
+      color: var(--primary-color);
+      flex-shrink: 0;
+    }
+
+    p {
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      font-size: 1.05rem;
+    }
+
+    ul {
+      list-style-type: none;
+      margin-left: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    li {
+      position: relative;
+      padding-left: 1.75rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--primary-color);
+      font-weight: bold;
+    }
+
+    .alert {
+      background: rgba(255, 107, 107, 0.08);
+      border-left: 4px solid var(--accent-color);
+      padding: 1.25rem;
+      border-radius: 8px;
+      margin: 1.5rem 0;
+    }
+
+    .alert p {
+      color: #ff8787;
+      margin-bottom: 0;
+      font-size: 0.95rem;
+    }
+
+    .method-card {
+      background: rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-top: 1rem;
+    }
+
+    .method-title {
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .method-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    a {
+      color: var(--primary-color);
+      text-decoration: none;
+      transition: color 0.2s ease;
+      font-weight: 500;
+    }
+
+    a:hover {
+      color: var(--primary-hover);
+      text-decoration: underline;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 4rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-color);
+      padding-top: 2rem;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 0;
+      }
+      .container {
+        border-radius: 0;
+        border: none;
+        padding: 2rem 1.5rem;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="app-icon">🦸</div>
+      <h1>Break Free</h1>
+      <div class="subtitle">Gamified Self-Control Coach</div>
+      <div class="last-updated">Last Updated: August 29, 2026</div>
+    </header>
+
+    <div class="divider"></div>
+
+    <!-- 1. Introduction -->
+    <section>
+      <h2>
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        1. Introduction
+      </h2>
+      <p>Break Free (“the App”) is a gamified habit and wellness companion designed to help you build better self-control. This Privacy Policy describes how we handle information when you use the App. We are committed to protecting your privacy and ensuring you have complete control over your personal data.</p>
+    </section>
+
+    <!-- 2. Data We Collect -->
+    <section>
+      <h2>
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        </svg>
+        2. Data We Collect
+      </h2>
+      <p>Break Free is a local-first application. The things you record in it stay on your device.</p>
+      <ul>
+        <li><strong>Local Storage:</strong> Everything you enter in the App (habit names, logged slips and the triggers you attach to them, journal/reflection entries, preferences, streaks, and leveling/gamification progress) is stored <strong>locally on your device</strong> using platform-native storage.</li>
+        <li><strong>Your Content Is Never Uploaded:</strong> Your habits, logged slips, journal entries and progress are <strong>not</strong> transmitted to us or to any external server. We have no copy of them and no way to read them.</li>
+        <li><strong>Anonymous Sign-In:</strong> The App uses <strong>Firebase Authentication</strong> (a Google service) to create an <strong>anonymous account identifier</strong> for your installation. We never ask for, and never receive, your name, email address, or phone number. To provide this service, Google processes technical information such as your IP address and device identifiers, as described on the <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Firebase Privacy and Security</a> page.</li>
+        <li><strong>No Ads, Analytics, or Tracking:</strong> The App contains no advertising SDKs, no analytics SDKs, and no tracking or profiling of any kind. Firebase Authentication is the only third-party service the App communicates with.</li>
+        <li><strong>Notifications:</strong> If you enable the daily check-in reminder, it is scheduled and delivered entirely on your device. No notification data is sent anywhere.</li>
+        <li><strong>We Never Read Your Messages:</strong> The App does not request or access your SMS, call logs, contacts, photos, or location.</li>
+      </ul>
+    </section>
+
+    <!-- 3. Data Retention Policy -->
+    <section>
+      <h2>
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        3. Data Retention Policy
+      </h2>
+      <p>We believe that you own your data:</p>
+      <ul>
+        <li>Your habits, journal entries, and progress are retained <strong>only as long as the App is installed</strong> on your device. We hold no copy, backup, or historical record of them on any system.</li>
+        <li>The anonymous account identifier created at sign-in is held by Firebase until it is deleted. It contains no personal details and is not linked to your habit or journal content.</li>
+        <li>Your device's operating system may include app data in its own backups (for example, Google Drive backup on Android or iCloud on iOS). This is controlled by your device settings, not by the App.</li>
+      </ul>
+    </section>
+
+    <!-- 4. Data Deletion (Your Rights) -->
+    <section>
+      <h2>
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        4. Data Deletion & How to Delete Your Data
+      </h2>
+      <p>You have the absolute right to delete your data at any time. You can permanently delete all data collected by Break Free using any of the following methods:</p>
+      
+      <div class="method-card">
+        <div class="method-title">Option A: In-App Reset</div>
+        <div class="method-desc">Navigate to the <strong>Settings</strong> screen in the App and tap <strong>"Reset All Progress"</strong>. This will instantly and permanently erase all habits, streaks, level progress, and journal entries from your device's local memory.</div>
+      </div>
+
+      <div class="method-card">
+        <div class="method-title">Option B: Clear App Storage via System Settings</div>
+        <div class="method-desc">
+          You can clear the app's cache and data through your device settings:
+          <br>• <strong>Android:</strong> Settings > Apps > Break Free > Storage > Clear Data & Clear Cache.
+          <br>• <strong>iOS:</strong> Settings > General > iPhone Storage > Break Free > Delete App.
+        </div>
+      </div>
+
+      <div class="method-card">
+        <div class="method-title">Option C: Uninstall the App</div>
+        <div class="method-desc">Uninstalling the App from your device will automatically, immediately, and permanently delete all local data associated with the App.</div>
+      </div>
+
+      <div class="alert">
+        <p><strong>Note:</strong> Once your local data is deleted using any of the methods above, it is permanently lost and cannot be recovered, because we store no remote backups of it.</p>
+        <p><strong>Deleting your anonymous account:</strong> Uninstalling the App removes the data on your device, but the anonymous account identifier described in Section 2 may remain with Firebase. To have it deleted, email us at the address below and we will remove it. Because the identifier holds no personal details, it cannot be traced back to you by us or by anyone else.</p>
+      </div>
+    </section>
+
+    <!-- 5. Children's Privacy -->
+    <section>
+      <h2>
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        5. Children's Privacy
+      </h2>
+      <p>The App is not directed at children under the age of 13. Since we do not collect any personal data online, we do not knowingly collect or solicit personal information from children.</p>
+    </section>
+
+    <!-- 6. Contact Us -->
+    <section>
+      <h2>
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+        </svg>
+        6. Contact Us
+      </h2>
+      <p>If you have any questions or feedback regarding this Privacy Policy or the security of your data, please contact us at:</p>
+      <p>
+        Email: <a href="mailto:chaubeyprashant@gmail.com">chaubeyprashant@gmail.com</a>
+        <br>
+        GitHub: <a href="https://github.com/chaubeyprashant/break-free" target="_blank" rel="noopener noreferrer">github.com/chaubeyprashant/break-free</a>
+      </p>
+    </section>
+
+    <footer>
+      <p>&copy; 2026 Break Free. All rights reserved.</p>
+    </footer>
+  </div>
+
+</body>
+</html>
