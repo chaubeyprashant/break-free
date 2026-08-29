@@ -48,3 +48,10 @@ app.*.map.json
 /android/key.properties
 /android/*.jks
 /android/*.keystore
+
+# Release signing artifacts (never commit certificates or keys)
+*.pem
+upload_certificate.pem
+
+# Gradle build output (was previously committed by mistake)
+/android/build/
