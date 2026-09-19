@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:break_free/features/companion/data/companion_repository.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:break_free/core/providers/habit_provider.dart';
@@ -10,13 +11,83 @@ import 'package:break_free/core/models/streak_milestone.dart';
 import 'package:break_free/core/models/habit.dart';
 import 'package:break_free/features/gamification/presentation/level_up_overlay.dart';
 
-class DashboardScreen extends StatelessWidget {
+import 'package:shared_preferences/shared_preferences.dart';
+
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    companionRepository.updateFcmToken();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowCompanionDiscovery();
+    });
+  }
+
+  Future<void> _checkAndShowCompanionDiscovery() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeen = prefs.getBool('has_seen_companion_feature') ?? false;
+    if (!hasSeen && mounted) {
+      await prefs.setBool('has_seen_companion_feature', true);
+      _showCompanionDiscoveryDialog();
+    }
+  }
+
+  void _showCompanionDiscoveryDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.people_alt_rounded, color: Colors.blue, size: 28),
+            SizedBox(width: 12),
+            Expanded(child: Text('New Feature!')),
+          ],
+        ),
+        content: const Text(
+          'You can now link your account with an Accountability Companion (a partner, parent, or friend).\n\n'
+          'They will get real-time updates and locations if you log a slip-up, helping you stay honest!',
+          style: TextStyle(fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Later'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              context.push('/companion');
+            },
+            icon: const Icon(Icons.link_rounded),
+            label: const Text('Set it up'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        title: const Text('Break Free'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.people_alt),
+            onPressed: () => context.push('/companion'),
+            tooltip: 'Companion Sync',
+          ),
+        ],
+      ),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [

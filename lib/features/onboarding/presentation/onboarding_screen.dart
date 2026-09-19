@@ -114,7 +114,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           curve: Curves.easeInOut,
                         );
                       } else {
-                        context.go('/habit-selection');
+                        context.go('/auth');
                       }
                     },
                     style: ElevatedButton.styleFrom(

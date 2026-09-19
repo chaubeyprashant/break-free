@@ -13,12 +13,16 @@ class HabitSelectionScreen extends StatefulWidget {
 class _HabitSelectionScreenState extends State<HabitSelectionScreen> {
   final List<String> _selectedHabits = [];
   final List<Map<String, String>> _habitOptions = [
-    {'title': 'Porn/Masturbation', 'icon': '🚫'},
+    {'title': 'Porn/Masturbation', 'icon': '🔞'},
     {'title': 'Smoking', 'icon': '🚬'},
     {'title': 'Alcohol', 'icon': '🍺'},
     {'title': 'Junk Food', 'icon': '🍔'},
     {'title': 'Social Media', 'icon': '📱'},
     {'title': 'Gaming', 'icon': '🎮'},
+    {'title': 'Gambling', 'icon': '🎲'},
+    {'title': 'Impulse Shopping', 'icon': '🛍️'},
+    {'title': 'Doomscrolling', 'icon': '🛌'},
+    {'title': 'Toxic Messaging', 'icon': '🤬'},
   ];
 
   @override

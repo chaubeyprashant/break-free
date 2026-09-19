@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:break_free/core/data/habit_repository.dart';
 import 'package:break_free/core/models/habit.dart';
+import 'package:break_free/features/companion/data/companion_repository.dart';
 
 class HabitProvider extends ChangeNotifier {
   final HabitRepository _repository;
@@ -66,6 +67,14 @@ class HabitProvider extends ChangeNotifier {
         relapseDates: [...habit.relapseDates, DateTime.now()],
       );
       await _repository.updateHabit(updatedHabit);
+      
+      // Mirror to Companion Sync (Firestore + Location)
+      try {
+        await companionRepository.syncRelapse(habit.title);
+      } catch (e) {
+        print('Error syncing relapse: $e');
+      }
+
       await _loadHabits();
     }
   }

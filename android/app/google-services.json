@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "46719551575",
+    "project_id": "break-free-cfebd",
+    "storage_bucket": "break-free-cfebd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:46719551575:android:cc87e0163c9ae0ba0e3b12",
+        "android_client_info": {
+          "package_name": "app.breakfree.mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "46719551575-32cc9olk0ps97na39usdibk9ijmhf7rv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.breakfree.mobile",
+            "certificate_hash": "0459c37ec1089e681a894cc5d46dab85f7b990f3"
+          }
+        },
+        {
+          "client_id": "46719551575-gdckestoakd8dpr5u0vpvlk2d3n6ve1o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYA9f1x4cC_pmx0Nb31Tz6qBFJPv2VLqw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "46719551575-gdckestoakd8dpr5u0vpvlk2d3n6ve1o.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "46719551575-lnupfn4d04g1ai346e7anpg619aaqpd2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "app.breakfree.mobile"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
