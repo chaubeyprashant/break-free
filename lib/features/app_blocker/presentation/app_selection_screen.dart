@@ -117,7 +117,30 @@ class _AppSelectionScreenState extends State<AppSelectionScreen> {
                 if (!_isAccessibilityEnabled)
                   ElevatedButton(
                     onPressed: () async {
-                      await appBlockerRepository.openAccessibilitySettings();
+                      final shouldOpen = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Accessibility Required'),
+                          content: const Text(
+                            'Break Free needs Accessibility Service permission to monitor the apps you open on your screen and block the ones you have selected to restrict.\n\n'
+                            'We do not collect or share any personal data from your screen. This service is strictly used locally on your device for app blocking.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Proceed to Settings'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (shouldOpen == true) {
+                        await appBlockerRepository.openAccessibilitySettings();
+                      }
                     },
                     child: const Text('Enable'),
                   ),
