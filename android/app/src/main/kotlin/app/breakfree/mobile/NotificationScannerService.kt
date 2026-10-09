@@ -2,54 +2,55 @@ package app.breakfree.mobile
 
 import android.app.Notification
 import android.content.Intent
+import android.os.SystemClock
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 
+/**
+ * Optional notification keyword scanner. Content is matched on-device and is not stored.
+ * Categories and cooldown come from [ProtectionStore].
+ */
 class NotificationScannerService : NotificationListenerService() {
-    private val TAG = "NotificationScanner"
-    
-    private val keywords = listOf(
-        // Smoking
-        "smoke", "tobacco", "vape", "cigarette", "cigar",
-        // Alcohol
-        "liquor", "alcohol", "beer", "wine", "vodka", "whiskey", "pub ", "bar ",
-        // Junk Food
-        "mcdonalds", "burger", "kfc", "wendys", "dominos", "pizza", "donut", "candy", "fast food", "taco bell", "krispy",
-        // Gambling
-        "draftkings", "betmgm", "casino", "stake", "betting", "fanduel",
-        // Shopping
-        "amazon", "temu", "shein", "zara", "aliexpress"
-    )
+    private val tag = "NotificationScanner"
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
-        sbn?.let {
-            val packageName = it.packageName
-            val extras = it.notification.extras
-            val title = extras.getString(Notification.EXTRA_TITLE) ?: ""
-            val text = extras.getString(Notification.EXTRA_TEXT) ?: ""
-            
-            val fullText = "$title $text".lowercase()
-            
-            Log.d(TAG, "Notification received from $packageName: $fullText")
+        val notification = sbn ?: return
+        if (notification.packageName == packageName) return
 
-            // Simple keyword search
-            val foundKeyword = keywords.find { keyword -> fullText.contains(keyword) }
-            
-            if (foundKeyword != null) {
-                Log.d(TAG, "Suspicious transaction detected! Keyword: $foundKeyword")
-                
-                // Wake up MainActivity
-                val launchIntent = Intent(this, MainActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                    putExtra("BLOCKED_PACKAGE", "notification_scanner")
-                    putExtra("TRIGGER_REASON", "suspicious_transaction")
-                    putExtra("NOTIFICATION_TEXT", "Detected '$foundKeyword' in notification.")
-                }
-                startActivity(launchIntent)
-            }
+        val prefs = ProtectionStore.prefs(this)
+        if (!ProtectionStore.isProtectionEnabled(prefs)) return
+        if (!prefs.getBoolean(ProtectionStore.KEY_SCANNER_ENABLED, true)) return
+
+        val cooldownSec = prefs.getInt(ProtectionStore.KEY_SCANNER_COOLDOWN, 120).coerceIn(30, 3600)
+        val last = prefs.getLong(ProtectionStore.KEY_LAST_SCANNER_AT, 0L)
+        val now = SystemClock.elapsedRealtime()
+        if (now - last < cooldownSec * 1000L) return
+
+        val extras = notification.notification.extras
+        val title = extras.getString(Notification.EXTRA_TITLE) ?: ""
+        val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
+
+        val match = NotificationKeywordMatcher.findMatch(
+            title = title,
+            text = text,
+            enabledCategories = ProtectionStore.scannerCategories(prefs),
+        ) ?: return
+
+        // Do not log full notification bodies — keyword + category only.
+        Log.d(tag, "Intervention keyword=${match.keyword} category=${match.category}")
+        prefs.edit().putLong(ProtectionStore.KEY_LAST_SCANNER_AT, now).apply()
+
+        val launchIntent = Intent(this, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            putExtra(AppBlockerService.EXTRA_BLOCKED_PACKAGE, "notification_scanner")
+            putExtra(AppBlockerService.EXTRA_TRIGGER_REASON, "suspicious_transaction")
+            putExtra("NOTIFICATION_TEXT", "Matched “${match.keyword}” (${match.category.replace('_', ' ')})")
+            putExtra(AppBlockerService.EXTRA_MATCH_CATEGORY, match.category)
+            putExtra(AppBlockerService.EXTRA_MATCH_KEYWORD, match.keyword)
         }
+        startActivity(launchIntent)
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {

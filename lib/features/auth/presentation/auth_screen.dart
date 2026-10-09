@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:break_free/core/theme/bf_spacing.dart';
+import 'package:break_free/core/widgets/bf_components.dart';
 import 'package:break_free/features/auth/presentation/auth_provider.dart';
 
 class AuthScreen extends StatelessWidget {
@@ -14,43 +15,40 @@ class AuthScreen extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(32.0),
+          padding: const EdgeInsets.all(BfSpacing.xxl),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
               Text(
-                'Welcome to',
-                style: Theme.of(context).textTheme.headlineSmall,
-                textAlign: TextAlign.center,
-              ).animate().fadeIn(delay: 100.ms),
-              const SizedBox(height: 8),
-              Text(
-                'Break Free',
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
+                'BREAK FREE',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      letterSpacing: 2,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                     ),
-                textAlign: TextAlign.center,
-              ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
-              const SizedBox(height: 32),
-              const Text(
-                '🔑',
-                style: TextStyle(fontSize: 80),
-                textAlign: TextAlign.center,
-              ).animate().scale(delay: 300.ms, duration: 500.ms),
-              const SizedBox(height: 48),
+              ),
+              const SizedBox(height: BfSpacing.md),
+              Text(
+                'Sign in to continue',
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: BfSpacing.sm),
+              Text(
+                'Your recovery data stays on this device. Sign-in is for account sync and companion features.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: BfSpacing.xxl),
               if (authProvider.error != null)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
+                  padding: const EdgeInsets.only(bottom: BfSpacing.md),
                   child: Text(
                     authProvider.error!,
                     style: TextStyle(color: Theme.of(context).colorScheme.error),
-                    textAlign: TextAlign.center,
                   ),
                 ),
-              ElevatedButton.icon(
+              BfPrimaryButton(
+                label: authProvider.isLoading ? 'Signing in…' : 'Continue with Google',
+                icon: Icons.login,
                 onPressed: authProvider.isLoading
                     ? null
                     : () async {
@@ -59,14 +57,11 @@ class AuthScreen extends StatelessWidget {
                           context.go('/habit-selection');
                         }
                       },
-                icon: const Icon(Icons.login),
-                label: const Text('Continue with Google'),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 56),
-                ),
-              ).animate().fadeIn(delay: 400.ms),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
+              ),
+              const SizedBox(height: BfSpacing.xs),
+              BfSecondaryButton(
+                label: 'Continue as guest',
+                icon: Icons.person_outline,
                 onPressed: authProvider.isLoading
                     ? null
                     : () async {
@@ -75,16 +70,11 @@ class AuthScreen extends StatelessWidget {
                           context.go('/habit-selection');
                         }
                       },
-                icon: const Icon(Icons.person_outline),
-                label: const Text('Continue as Guest'),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 56),
-                ),
-              ).animate().fadeIn(delay: 500.ms),
+              ),
               if (authProvider.isLoading)
                 const Padding(
-                  padding: EdgeInsets.only(top: 24.0),
-                  child: Center(child: CircularProgressIndicator()),
+                  padding: EdgeInsets.only(top: BfSpacing.xl),
+                  child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
                 ),
               const Spacer(),
             ],

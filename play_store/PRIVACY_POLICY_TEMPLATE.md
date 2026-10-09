@@ -17,6 +17,12 @@ Break Free (“the App”) is a habit and wellness companion. This policy descri
 - **Information you enter in the app** (for example habit names, journal entries, and preferences) may be stored **locally on your device** using the device’s storage (e.g. via platform APIs used by the app).
 - **Adjust this section** if you add analytics, crash reporting, accounts, cloud sync, or third-party SDKs. List each service, what it collects, and why.
 
+### App & Web Blocker (Android)
+
+- The App's Accessibility Service detects the app in the foreground and, in supported browsers only, reads the text of the address bar to detect adult websites. This processing happens on your device. Web addresses and screen content are not stored and are not sent to us.
+- The list of apps you choose to block is stored on your device.
+- If you link an accountability companion, the App records when a blocked app or adult website was intercepted (the app name or the label "Adult content blocked", the time, and your location if you granted location access) and shows it to your companion. Web addresses are never included. Without a linked companion, nothing about blocker events leaves your device.
+
 ### Data we do not [intentionally] collect
 
 - We do not require you to create an account in the App [unless you add accounts later].

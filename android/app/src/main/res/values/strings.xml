@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="accessibility_service_description">Break Free uses Accessibility Services to detect when you open a distracting app, helping you stay focused and mindful of your digital habits.</string>
+    <string name="accessibility_service_description">Break Free uses this service for its App &amp; Web Blocker: it detects when you open an app you chose to block, and reads the address bar of supported browsers (Chrome, Brave, Edge, Samsung Internet, Firefox, Opera, DuckDuckGo, Vivaldi, Kiwi) to detect adult websites, so it can show you an intervention screen. Detection runs on your device; web addresses and screen content are never stored or uploaded.</string>
 </resources>

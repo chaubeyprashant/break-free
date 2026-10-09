@@ -1,7 +1,18 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:just_audio/just_audio.dart';
+import 'dart:async';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:provider/provider.dart';
+import 'package:break_free/core/providers/game_provider.dart';
+import 'package:break_free/core/theme/bf_colors.dart';
+import 'package:break_free/core/theme/bf_spacing.dart';
+import 'package:break_free/core/widgets/bf_components.dart';
+import 'package:break_free/features/panic_mode/panic_audio.dart';
+
+/// Offline 90-second guided breathing / urge surfing session.
 class PanicModeScreen extends StatefulWidget {
   const PanicModeScreen({super.key});
 
@@ -10,193 +21,278 @@ class PanicModeScreen extends StatefulWidget {
 }
 
 class _PanicModeScreenState extends State<PanicModeScreen> {
-  late AudioPlayer _player;
+  static const _prompts = ['Breathe in', 'Hold', 'Breathe out', 'Hold'];
+
+  late final AudioPlayer _player;
+  Timer? _ticker;
+  Duration _elapsed = Duration.zero;
+  bool _audioReady = false;
+  bool _audioFailed = false;
   bool _isPlaying = false;
+  bool _completed = false;
+  bool _rewardClaimed = false;
+  double _volume = 0.7;
+  int _promptIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _player = AudioPlayer();
-    // TODO: Load actual audio file
-    // _player.setAsset('assets/audio/calm.mp3');
+    _prepareAudio();
+    _startSession();
+  }
+
+  Future<void> _prepareAudio() async {
+    try {
+      await _player.setAsset(PanicAudioPaths.primary);
+      await _player.setLoopMode(LoopMode.one);
+      await _player.setVolume(_volume);
+      if (!mounted) return;
+      setState(() {
+        _audioReady = true;
+        _audioFailed = false;
+      });
+      await _player.play();
+      if (mounted) setState(() => _isPlaying = true);
+    } catch (e) {
+      debugPrint('Panic audio load failed (session continues offline): $e');
+      if (mounted) {
+        setState(() {
+          _audioReady = false;
+          _audioFailed = true;
+          _isPlaying = false;
+        });
+      }
+    }
+  }
+
+  void _startSession() {
+    _ticker?.cancel();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || _completed) return;
+      setState(() {
+        _elapsed += const Duration(seconds: 1);
+        _promptIndex = (_elapsed.inSeconds ~/ 4) % _prompts.length;
+      });
+      if (_elapsed.inSeconds > 0 && _elapsed.inSeconds % 4 == 0) {
+        HapticFeedback.lightImpact();
+      }
+      if (_elapsed >= PanicAudioPaths.sessionDuration) {
+        _onComplete();
+      }
+    });
+  }
+
+  Future<void> _onComplete() async {
+    if (_completed) return;
+    _ticker?.cancel();
+    setState(() => _completed = true);
+    HapticFeedback.mediumImpact();
+    try {
+      await _player.pause();
+    } catch (_) {}
+    if (!_rewardClaimed && mounted) {
+      _rewardClaimed = true;
+      await context.read<GameProvider>().addXp(
+            PanicAudioPaths.xpReward,
+            coinBonus: PanicAudioPaths.coinReward,
+          );
+    }
+  }
+
+  Future<void> _togglePlay() async {
+    if (_completed) return;
+    if (!_audioReady) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _audioFailed
+                ? 'Audio unavailable — keep breathing with the guide.'
+                : 'Loading audio…',
+          ),
+        ),
+      );
+      return;
+    }
+    try {
+      if (_isPlaying) {
+        await _player.pause();
+        setState(() => _isPlaying = false);
+      } else {
+        await _player.play();
+        setState(() => _isPlaying = true);
+      }
+      HapticFeedback.selectionClick();
+    } catch (_) {
+      setState(() => _audioFailed = true);
+    }
+  }
+
+  Future<void> _setVolume(double v) async {
+    setState(() => _volume = v);
+    try {
+      await _player.setVolume(v);
+    } catch (_) {}
   }
 
   @override
   void dispose() {
+    _ticker?.cancel();
     _player.dispose();
     super.dispose();
   }
 
+  double get _progress =>
+      (_elapsed.inMilliseconds / PanicAudioPaths.sessionDuration.inMilliseconds).clamp(0.0, 1.0);
+
+  int get _secondsLeft =>
+      (PanicAudioPaths.sessionDuration.inSeconds - _elapsed.inSeconds)
+          .clamp(0, PanicAudioPaths.sessionDuration.inSeconds);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Dark background for serious tone
+      backgroundColor: BfColors.ink,
       appBar: AppBar(
         title: const Text(
-          'Urge Surfing',
-          style: TextStyle(color: Colors.white),
+          'Breathing',
+          style: TextStyle(color: BfColors.textPrimaryDark, fontWeight: FontWeight.w500),
         ),
         backgroundColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: BfColors.textPrimaryDark),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Breathing animation
-            Container(
-                  width: 260,
-                  height: 260,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                        Colors.transparent,
-                      ],
-                      stops: const [0.7, 1.0],
-                    ),
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: 180,
-                      height: 180,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(BfSpacing.xl),
+          child: Column(
+            children: [
+              LinearProgressIndicator(
+                value: _progress,
+                backgroundColor: BfColors.inkMuted,
+                color: BfColors.accent,
+                minHeight: 3,
+                borderRadius: BorderRadius.circular(2),
+              ),
+              const SizedBox(height: BfSpacing.sm),
+              Text(
+                _completed ? 'Session complete' : '$_secondsLeft s remaining',
+                style: const TextStyle(color: BfColors.textTertiaryDark, letterSpacing: 0.4),
+              ),
+              const SizedBox(height: BfSpacing.xl),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 200,
+                      height: 200,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Theme.of(context).colorScheme.primary,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withOpacity(0.5),
-                            blurRadius: 20,
-                            spreadRadius: 2,
-                          ),
-                        ],
+                        border: Border.all(color: BfColors.accent.withValues(alpha: 0.35), width: 1),
+                        color: BfColors.accentSoft,
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Text(
-                          'Breathe',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 2,
+                          _completed ? 'Still' : _prompts[_promptIndex],
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: BfColors.textPrimaryDark,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 1.4,
                           ),
                         ),
                       ),
+                    )
+                        .animate(target: _completed ? 0 : 1, onPlay: (c) => c.repeat(reverse: true))
+                        .scale(
+                          duration: 4.seconds,
+                          begin: const Offset(0.94, 0.94),
+                          end: const Offset(1.06, 1.06),
+                        ),
+                    const SizedBox(height: BfSpacing.xl),
+                    Text(
+                      _completed
+                          ? 'The wave passed.  +${PanicAudioPaths.xpReward} XP'
+                          : 'This feeling will pass.',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: BfColors.textSecondaryDark,
+                          ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                )
-                .animate(
-                  onPlay: (controller) => controller.repeat(reverse: true),
-                )
-                .scale(
-                  duration: 4.seconds,
-                  begin: const Offset(0.9, 0.9),
-                  end: const Offset(1.1, 1.1),
-                ),
-
-            const SizedBox(height: 56),
-
-            // Reality Check Section (Redesigned)
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A), // Dark surface
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.error.withOpacity(0.5),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.warning_amber_rounded,
-                        color: Theme.of(context).colorScheme.error,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'REALITY CHECK',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: Theme.of(context).colorScheme.error,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 3,
-                              fontSize: 14,
-                            ),
+                    if (_audioFailed) ...[
+                      const SizedBox(height: BfSpacing.xs),
+                      const Text(
+                        'Running without audio — breathing guide still works offline.',
+                        style: TextStyle(color: BfColors.textTertiaryDark, fontSize: 12),
+                        textAlign: TextAlign.center,
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Relapsing restarts the cycle of:',
-                    style: TextStyle(color: Colors.white.withOpacity(0.7)),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildConsequenceRow(context, '🧠 Brain Fog & Fatigue'),
-                  _buildConsequenceRow(context, '📉 Lost Confidence'),
-                  _buildConsequenceRow(context, '😔 Deep Regret'),
-                  _buildConsequenceRow(context, '🔄 The Chaser Effect'),
-                  const SizedBox(height: 8),
-                ],
+                  ],
+                ),
               ),
-            ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1, end: 0),
-
-            const SizedBox(height: 32),
-            Text(
-              'This feeling will pass.',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.white54,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-            const SizedBox(height: 16),
-            IconButton(
-              iconSize: 64,
-              icon: Icon(_isPlaying ? Icons.pause_circle : Icons.play_circle),
-              color: Theme.of(context).colorScheme.primary,
-              onPressed: () {
-                setState(() {
-                  _isPlaying = !_isPlaying;
-                });
-              },
-            ),
-            const Text('Guided Audio', style: TextStyle(color: Colors.white54)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildConsequenceRow(BuildContext context, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        children: [
-          const Icon(Icons.close, color: Colors.white, size: 16),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+              if (!_completed) ...[
+                IconButton(
+                  iconSize: 56,
+                  icon: Icon(_isPlaying ? Icons.pause_circle : Icons.play_circle),
+                  color: BfColors.accent,
+                  onPressed: _togglePlay,
+                ),
+                Text(
+                  _audioReady ? 'Calming audio' : 'Guided breathing',
+                  style: const TextStyle(color: BfColors.textSecondaryDark),
+                ),
+                Row(
+                  children: [
+                    const Icon(Icons.volume_mute, color: BfColors.textTertiaryDark, size: 20),
+                    Expanded(
+                      child: Slider(
+                        value: _volume,
+                        onChanged: _setVolume,
+                        activeColor: BfColors.accent,
+                        inactiveColor: BfColors.inkMuted,
+                      ),
+                    ),
+                    const Icon(Icons.volume_up, color: BfColors.textTertiaryDark, size: 20),
+                  ],
+                ),
+                const SizedBox(height: BfSpacing.xs),
+                BfSecondaryButton(
+                  label: 'Open recovery plan',
+                  onPressed: () => context.push('/help'),
+                ),
+                const SizedBox(height: BfSpacing.xs),
+                TextButton(
+                  onPressed: () {
+                    HapticFeedback.heavyImpact();
+                    context.push('/urge');
+                  },
+                  child: const Text(
+                    'I still have an urge',
+                    style: TextStyle(color: BfColors.danger),
+                  ),
+                ),
+              ] else ...[
+                BfPrimaryButton(
+                  label: 'I feel steadier',
+                  onPressed: () => context.pop(),
+                ),
+                const SizedBox(height: BfSpacing.xs),
+                BfSecondaryButton(
+                  label: 'Open recovery plan',
+                  onPressed: () => context.push('/help'),
+                ),
+                TextButton(
+                  onPressed: () => context.push('/urge'),
+                  child: const Text(
+                    'I still have an urge',
+                    style: TextStyle(color: BfColors.danger),
+                  ),
+                ),
+              ],
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

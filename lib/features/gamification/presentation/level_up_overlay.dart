@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:break_free/core/theme/bf_colors.dart';
+import 'package:break_free/core/theme/bf_spacing.dart';
 
+/// Quiet level acknowledgment — no gold gradients or celebration chrome.
 class LevelUpOverlay extends StatelessWidget {
   final int newLevel;
   final String levelTitle;
@@ -19,80 +21,49 @@ class LevelUpOverlay extends StatelessWidget {
       color: Colors.black54,
       child: GestureDetector(
         onTap: onDismiss,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Column(
+        child: Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: BfSpacing.xxl),
+            padding: const EdgeInsets.all(BfSpacing.xl),
+            decoration: BoxDecoration(
+              color: BfColors.inkElevated,
+              borderRadius: BorderRadius.circular(BfRadius.md),
+              border: Border.all(color: BfColors.borderDark),
+            ),
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFF1A535C),
-                        const Color(0xFF2A9D8F),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF2A9D8F).withOpacity(0.5),
-                        blurRadius: 24,
-                        spreadRadius: 2,
+                Text(
+                  'LEVEL $newLevel',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        letterSpacing: 2,
+                        color: BfColors.textSecondaryDark,
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'LEVEL UP!',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: const Color(0xFFFFD700),
-                              letterSpacing: 4,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      )
-                          .animate()
-                          .fadeIn()
-                          .scale(begin: const Offset(0.5, 0.5), end: const Offset(1, 1), curve: Curves.elasticOut),
-                      const SizedBox(height: 12),
-                      Text(
-                        '$newLevel',
-                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              height: 1,
-                            ),
-                      )
-                          .animate()
-                          .fadeIn(delay: 150.ms)
-                          .scale(begin: const Offset(0, 0), end: const Offset(1, 1), curve: Curves.easeOutBack),
-                      const SizedBox(height: 4),
-                      Text(
-                        levelTitle,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Colors.white70,
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.3, end: 0),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Tap to continue',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
-                      ).animate().fadeIn(delay: 600.ms),
-                    ],
-                  ),
+                ),
+                const SizedBox(height: BfSpacing.sm),
+                Text(
+                  levelTitle,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: BfColors.textPrimaryDark,
+                        fontWeight: FontWeight.w500,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: BfSpacing.md),
+                Text(
+                  'Keep going.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: BfColors.textSecondaryDark,
+                      ),
+                ),
+                const SizedBox(height: BfSpacing.lg),
+                TextButton(
+                  onPressed: onDismiss,
+                  child: const Text('Continue'),
                 ),
               ],
-            )
-                .animate()
-                .fadeIn(duration: 200.ms)
-                .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1), curve: Curves.easeOutCubic),
-          ],
+            ),
+          ),
         ),
       ),
     );

@@ -13,6 +13,8 @@ class HabitProvider extends ChangeNotifier {
 
   List<Habit> get habits => _habits;
 
+  Future<void> reloadFromDisk() => _loadHabits();
+
   Future<void> _loadHabits() async {
     final habits = await _repository.getHabits();
     // De-duplicate by title

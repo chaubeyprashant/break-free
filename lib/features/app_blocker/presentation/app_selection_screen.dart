@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:installed_apps/app_info.dart';
+import 'package:break_free/core/theme/bf_colors.dart';
+import 'package:break_free/core/theme/bf_spacing.dart';
+import 'package:break_free/core/widgets/bf_components.dart';
 import 'package:break_free/features/app_blocker/data/app_blocker_repository.dart';
 
 class AppSelectionScreen extends StatefulWidget {
@@ -10,189 +13,203 @@ class AppSelectionScreen extends StatefulWidget {
   State<AppSelectionScreen> createState() => _AppSelectionScreenState();
 }
 
-class _AppSelectionScreenState extends State<AppSelectionScreen> {
+class _AppSelectionScreenState extends State<AppSelectionScreen> with WidgetsBindingObserver {
   bool _isAccessibilityEnabled = false;
   List<AppInfo> _installedApps = [];
   List<AppInfo> _filteredApps = [];
+  List<String> _supportedBrowsers = const [];
   bool _isLoading = true;
-  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkPermission();
+    _loadSupportedBrowsers();
     _fetchApps();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkPermission();
+    }
   }
 
   Future<void> _checkPermission() async {
     final enabled = await appBlockerRepository.isAccessibilityServiceEnabled();
-    setState(() {
-      _isAccessibilityEnabled = enabled;
-    });
+    if (!mounted) return;
+    setState(() => _isAccessibilityEnabled = enabled);
+  }
+
+  Future<void> _loadSupportedBrowsers() async {
+    final browsers = await appBlockerRepository.getSupportedBrowsers();
+    if (!mounted) return;
+    setState(() => _supportedBrowsers = browsers);
   }
 
   Future<void> _fetchApps() async {
     try {
-      // exclude system apps, with icon
       final apps = await InstalledApps.getInstalledApps();
-      // Sort alphabetically
-      apps.sort((a, b) => (a.name ?? '').toLowerCase().compareTo((b.name ?? '').toLowerCase()));
-      
+      apps.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      if (!mounted) return;
       setState(() {
         _installedApps = apps;
         _filteredApps = apps;
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint("Error fetching apps: $e");
-      setState(() {
-        _isLoading = false;
-      });
+      debugPrint('Error fetching apps: $e');
+      if (!mounted) return;
+      setState(() => _isLoading = false);
     }
   }
 
   void _filterApps(String query) {
     setState(() {
-      _searchQuery = query;
       if (query.isEmpty) {
         _filteredApps = _installedApps;
       } else {
+        final q = query.toLowerCase();
         _filteredApps = _installedApps.where((app) {
-          final name = (app.name ?? '').toLowerCase();
-          final pkg = (app.packageName ?? '').toLowerCase();
-          return name.contains(query.toLowerCase()) || pkg.contains(query.toLowerCase());
+          return app.name.toLowerCase().contains(q) || app.packageName.toLowerCase().contains(q);
         }).toList();
       }
     });
+  }
+
+  String get _browserListText {
+    if (_supportedBrowsers.isEmpty) return 'supported browsers';
+    if (_supportedBrowsers.length == 1) return _supportedBrowsers.first;
+    final head = _supportedBrowsers.sublist(0, _supportedBrowsers.length - 1).join(', ');
+    return '$head and ${_supportedBrowsers.last}';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('App Blocker'),
+        title: const Text('Protected apps'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
             onPressed: () {
               _checkPermission();
-              setState(() { _isLoading = true; });
+              setState(() => _isLoading = true);
               _fetchApps();
             },
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: _isAccessibilityEnabled ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
-            child: Row(
-              children: [
-                Icon(
-                  _isAccessibilityEnabled ? Icons.check_circle : Icons.warning,
-                  color: _isAccessibilityEnabled ? Colors.green : Colors.orange,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _isAccessibilityEnabled 
-                            ? 'Tracking Active' 
-                            : 'Permission Required',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _isAccessibilityEnabled
-                            ? 'Break Free is monitoring your apps.'
-                            : 'Enable Accessibility service to block apps.',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-                if (!_isAccessibilityEnabled)
-                  ElevatedButton(
-                    onPressed: () async {
-                      final shouldOpen = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Accessibility Required'),
-                          content: const Text(
-                            'Break Free needs Accessibility Service permission to monitor the apps you open on your screen and block the ones you have selected to restrict.\n\n'
-                            'We do not collect or share any personal data from your screen. This service is strictly used locally on your device for app blocking.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Proceed to Settings'),
-                            ),
-                          ],
-                        ),
-                      );
+      body: _isAccessibilityEnabled ? _buildBlockerList(context) : _buildDisclosure(context),
+    );
+  }
 
-                      if (shouldOpen == true) {
-                        await appBlockerRepository.openAccessibilitySettings();
-                      }
-                    },
-                    child: const Text('Enable'),
-                  ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search for games or apps...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+  Widget _buildBlockerList(BuildContext context) {
+    final blockedCount = appBlockerRepository.blockedApps.length;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(BfSpacing.screenH, BfSpacing.sm, BfSpacing.screenH, BfSpacing.xs),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$blockedCount apps protected',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-              onChanged: _filterApps,
+              const SizedBox(height: BfSpacing.xxs),
+              Text(
+                'Website filtering works in $_browserListText only. Other browsers are not covered.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(BfSpacing.screenH, BfSpacing.sm, BfSpacing.screenH, BfSpacing.xs),
+          child: TextField(
+            decoration: const InputDecoration(
+              hintText: 'Search apps',
+              prefixIcon: Icon(Icons.search, size: 20),
             ),
+            onChanged: _filterApps,
           ),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    itemCount: _filteredApps.length,
-                    itemBuilder: (context, index) {
-                      final app = _filteredApps[index];
-                      final isBlocked = appBlockerRepository.blockedApps.contains(app.packageName);
-                      
-                      return SwitchListTile(
-                        secondary: app.icon != null 
-                            ? Image.memory(app.icon!, width: 40, height: 40)
-                            : const Icon(Icons.android, size: 40),
-                        title: Text(app.name ?? 'Unknown App'),
-                        subtitle: Text(app.packageName ?? ''),
-                        value: isBlocked,
-                        onChanged: (value) async {
-                          if (!_isAccessibilityEnabled && value) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Please enable Accessibility permission first.')),
-                            );
-                            return;
-                          }
-                          await appBlockerRepository.toggleAppBlock(app.packageName!, value);
-                          setState(() {});
-                        },
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
+        ),
+        Expanded(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
+              : ListView.separated(
+                  itemCount: _filteredApps.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, indent: BfSpacing.screenH),
+                  itemBuilder: (context, index) {
+                    final app = _filteredApps[index];
+                    final isBlocked = appBlockerRepository.blockedApps.contains(app.packageName);
+                    return SwitchListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: BfSpacing.screenH),
+                      secondary: app.icon != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.memory(app.icon!, width: 36, height: 36),
+                            )
+                          : const Icon(Icons.apps, size: 36),
+                      title: Text(app.name, style: Theme.of(context).textTheme.titleSmall),
+                      subtitle: Text(
+                        app.packageName,
+                        style: Theme.of(context).textTheme.labelSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      value: isBlocked,
+                      activeThumbColor: BfColors.accent,
+                      onChanged: (value) async {
+                        await appBlockerRepository.toggleAppBlock(app.packageName, value);
+                        if (!mounted) return;
+                        setState(() {});
+                      },
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDisclosure(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(BfSpacing.xxl),
+      children: [
+        Text(
+          'Accessibility access',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: BfSpacing.md),
+        Text(
+          'Break Free uses Accessibility to:\n\n'
+          '• Notice when you open an app you chose to block\n'
+          '• Read the address bar of $_browserListText for website filters\n\n'
+          'Detection stays on your device. Addresses are not stored. '
+          'If you link a companion, they may get a short alert — not browsing history.',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
+        ),
+        const SizedBox(height: BfSpacing.xxl),
+        BfPrimaryButton(
+          label: 'Open Accessibility settings',
+          onPressed: () => appBlockerRepository.openAccessibilitySettings(),
+        ),
+        const SizedBox(height: BfSpacing.xs),
+        BfSecondaryButton(
+          label: 'Not now',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
     );
   }
 }

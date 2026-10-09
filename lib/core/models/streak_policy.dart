@@ -35,8 +35,14 @@ class StreakPolicy {
   bool get canUseFreeze => freezesUsedThisWeek < freezesPerWeek;
   bool get canUseShield => shieldsUsedThisWeek < shieldsPerWeek;
 
+  /// Caps can be raised for Premium without changing stored usage history.
+  bool canUseFreezeWithCap(int cap) => freezesUsedThisWeek < cap;
+  bool canUseShieldWithCap(int cap) => shieldsUsedThisWeek < cap;
+
   /// User can use shield only at level 3+ (checked in provider with level).
   bool canUseShieldAtLevel(int level) => level >= 3 && canUseShield;
+
+  bool canUseShieldAtLevelWithCap(int level, int cap) => level >= 3 && canUseShieldWithCap(cap);
 
   Map<String, dynamic> toMap() => {
         'freezeUsedDates': freezeUsedDates.map((e) => e.toIso8601String()).toList(),

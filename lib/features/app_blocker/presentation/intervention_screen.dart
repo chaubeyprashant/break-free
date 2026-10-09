@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:break_free/features/settings/data/accountability_repository.dart';
+import 'package:break_free/core/theme/bf_colors.dart';
+import 'package:break_free/core/theme/bf_spacing.dart';
+import 'package:break_free/core/widgets/bf_components.dart';
 
 class InterventionScreen extends StatelessWidget {
   final String packageName;
@@ -13,72 +15,48 @@ class InterventionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Immersive panic/intervention mode
+      backgroundColor: BfColors.ink,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(BfSpacing.xl),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(
-                Icons.self_improvement,
-                size: 100,
-                color: Colors.blueAccent,
-              ),
-              const SizedBox(height: 32),
-              const Text(
-                'Pause and Breathe',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 16),
+              const Icon(Icons.self_improvement, size: 72, color: BfColors.accent),
+              const SizedBox(height: BfSpacing.xxl),
               Text(
-                'You are trying to open a restricted app.\n\nTake a deep breath. Is this a mindful choice, or a habit loop?',
+                'Pause and breathe',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.white.withOpacity(0.8),
-                ),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: BfColors.textPrimaryDark,
+                      fontWeight: FontWeight.w500,
+                    ),
+              ),
+              const SizedBox(height: BfSpacing.md),
+              Text(
+                'You are trying to open a restricted app.\n\n'
+                'Take a breath. Is this a mindful choice, or a habit loop?',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: BfColors.textSecondaryDark,
+                      height: 1.45,
+                    ),
               ),
               const Spacer(),
-              ElevatedButton(
-                onPressed: () {
-                  // User chose to stop - reward them and go back to dashboard
-                  context.go('/');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Close App & Stay Focused',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
+              BfPrimaryButton(
+                label: 'Close app & stay focused',
+                onPressed: () => context.go('/'),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: BfSpacing.md),
               TextButton(
-                onPressed: () {
-                  accountabilityRepository.sendSmsOnRelapse('App Usage');
-                  // Navigate to relapse logger
-                  context.push('/relapse');
-                },
-                child: Text(
-                  'I slipped up (Log Relapse)',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white.withOpacity(0.5),
-                  ),
+                onPressed: () => context.push('/relapse'),
+                child: const Text(
+                  'I slipped up (log relapse)',
+                  style: TextStyle(color: BfColors.textTertiaryDark),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: BfSpacing.xxl),
             ],
           ),
         ),

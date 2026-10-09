@@ -1,24 +1,41 @@
 import 'package:go_router/go_router.dart';
-import 'package:break_free/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:break_free/core/shell/app_shell.dart';
+import 'package:break_free/features/dashboard/presentation/home_screen.dart';
+import 'package:break_free/features/progress/presentation/progress_screen.dart';
+import 'package:break_free/features/support/presentation/support_hub_screen.dart';
 import 'package:break_free/features/panic_mode/presentation/panic_mode_screen.dart';
 import 'package:break_free/features/subscription/presentation/subscription_screen.dart';
 import 'package:break_free/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:break_free/features/onboarding/presentation/habit_selection_screen.dart';
 import 'package:break_free/features/auth/presentation/auth_screen.dart';
-
 import 'package:break_free/features/gamification/presentation/mind_city_screen.dart';
 import 'package:break_free/features/gamification/presentation/bubble_popper_game.dart';
 import 'package:break_free/features/recovery/presentation/relapse_screen.dart';
 import 'package:break_free/features/journal/presentation/reflection_screen.dart';
 import 'package:break_free/features/settings/presentation/settings_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:break_free/features/settings/presentation/cloud_backup_screen.dart';
 import 'package:break_free/features/app_blocker/presentation/app_selection_screen.dart';
 import 'package:break_free/features/app_blocker/presentation/intervention_screen.dart';
 import 'package:break_free/features/app_blocker/presentation/adult_intervention_screen.dart';
 import 'package:break_free/features/scanner/presentation/scanner_settings_screen.dart';
 import 'package:break_free/features/scanner/presentation/transaction_intervention_screen.dart';
-import 'package:break_free/features/settings/presentation/accountability_settings_screen.dart';
 import 'package:break_free/features/companion/presentation/companion_dashboard_screen.dart';
+import 'package:break_free/features/protection/presentation/protection_center_screen.dart';
+import 'package:break_free/features/protection/presentation/schedule_editor_screen.dart';
+import 'package:break_free/features/protection/presentation/custom_domains_screen.dart';
+import 'package:break_free/features/protection/presentation/companion_alert_prefs_screen.dart';
+import 'package:break_free/features/protection/presentation/protection_intervention_screen.dart';
+import 'package:break_free/core/models/protection_schedule.dart';
+import 'package:break_free/features/urge/presentation/urge_flow_screen.dart';
+import 'package:break_free/features/urge/presentation/urge_intervention_screen.dart';
+import 'package:break_free/features/urge/presentation/urge_history_screen.dart';
+import 'package:break_free/features/recovery_plan/presentation/recovery_plan_screen.dart';
+import 'package:break_free/features/recovery_plan/presentation/recovery_plan_edit_screen.dart';
+import 'package:break_free/core/models/replacement_activity.dart';
+import 'package:break_free/features/replace_habit/presentation/replace_habit_screen.dart';
+import 'package:break_free/features/replace_habit/presentation/activity_session_screen.dart';
+import 'package:break_free/features/achievements/presentation/achievements_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/',
@@ -29,7 +46,7 @@ final router = GoRouter(
     if (!loggedIn && !isAuthRoute) {
       return '/onboarding';
     }
-    
+
     if (loggedIn && isAuthRoute) {
       return '/';
     }
@@ -37,7 +54,53 @@ final router = GoRouter(
     return null;
   },
   routes: [
-    GoRoute(path: '/', builder: (context, state) => const DashboardScreen()),
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) {
+        return AppShell(navigationShell: navigationShell);
+      },
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/',
+              builder: (context, state) => const HomeScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/progress',
+              builder: (context, state) => const ProgressScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/support',
+              builder: (context, state) => const SupportHubScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/protection',
+              builder: (context, state) => const ProtectionCenterScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/settings',
+              builder: (context, state) => const SettingsScreen(),
+            ),
+          ],
+        ),
+      ],
+    ),
     GoRoute(
       path: '/onboarding',
       builder: (context, state) => const OnboardingScreen(),
@@ -67,8 +130,38 @@ final router = GoRouter(
       builder: (context, state) => const ReflectionScreen(),
     ),
     GoRoute(
-      path: '/settings',
-      builder: (context, state) => const SettingsScreen(),
+      path: '/urge',
+      builder: (context, state) => const UrgeFlowScreen(),
+    ),
+    GoRoute(
+      path: '/achievements',
+      builder: (context, state) => const AchievementsScreen(),
+    ),
+    GoRoute(
+      path: '/replace',
+      builder: (context, state) => const ReplaceHabitScreen(),
+    ),
+    GoRoute(
+      path: '/replace/session',
+      redirect: (context, state) => state.extra is ReplacementActivity ? null : '/replace',
+      builder: (context, state) => ActivitySessionScreen(activity: state.extra as ReplacementActivity),
+    ),
+    GoRoute(
+      path: '/help',
+      builder: (context, state) => const RecoveryPlanScreen(),
+    ),
+    GoRoute(
+      path: '/help/edit',
+      builder: (context, state) => const RecoveryPlanEditScreen(),
+    ),
+    GoRoute(
+      path: '/urge/history',
+      builder: (context, state) => const UrgeHistoryScreen(),
+    ),
+    GoRoute(
+      path: '/urge/intervention',
+      redirect: (context, state) => state.extra is UrgeInterventionArgs ? null : '/urge',
+      builder: (context, state) => UrgeInterventionScreen(args: state.extra as UrgeInterventionArgs),
     ),
     GoRoute(
       path: '/panic',
@@ -77,6 +170,29 @@ final router = GoRouter(
     GoRoute(
       path: '/subscription',
       builder: (context, state) => const SubscriptionScreen(),
+    ),
+    GoRoute(
+      path: '/protection/domains',
+      builder: (context, state) => const CustomDomainsScreen(),
+    ),
+    GoRoute(
+      path: '/protection/companion-alerts',
+      builder: (context, state) => const CompanionAlertPrefsScreen(),
+    ),
+    GoRoute(
+      path: '/protection/schedule',
+      builder: (context, state) {
+        final existing = state.extra is ProtectionSchedule ? state.extra as ProtectionSchedule : null;
+        return ScheduleEditorScreen(existing: existing);
+      },
+    ),
+    GoRoute(
+      path: '/protection/intervention',
+      redirect: (context, state) =>
+          state.extra is ProtectionInterventionArgs ? null : '/protection',
+      builder: (context, state) => ProtectionInterventionScreen(
+        args: state.extra as ProtectionInterventionArgs,
+      ),
     ),
     GoRoute(
       path: '/app-blocker',
@@ -108,12 +224,12 @@ final router = GoRouter(
       },
     ),
     GoRoute(
-      path: '/accountability-settings',
-      builder: (context, state) => const AccountabilitySettingsScreen(),
-    ),
-    GoRoute(
       path: '/companion',
       builder: (context, state) => const CompanionDashboardScreen(),
+    ),
+    GoRoute(
+      path: '/cloud-backup',
+      builder: (context, state) => const CloudBackupScreen(),
     ),
   ],
 );

@@ -24,7 +24,9 @@ Use this with your **AAB** from `flutter build appbundle` (release-signed; see `
 ## Policy & technical
 
 - [ ] **Privacy policy URL** (HTTPS, publicly reachable). Host a page that states what data you collect. For local-only apps, describe “data stored on device only” if accurate. Template ideas: `PRIVACY_POLICY_TEMPLATE.md`.
-- [ ] **Data safety form** (Play Console) — Declare location, contacts, financial info, health, etc. Match your app: e.g. **no** collection if everything is on-device.
+- [ ] **Data safety form** (Play Console) — Declare location, contacts, financial info, health, etc. With Companion Sync enabled the app **does** share data: precise location and app activity (blocked-app and adult-website events, logged slips) go to Firestore and to the linked companion. Declare them.
+- [ ] **Accessibility API declaration** — The app uses `AccessibilityService` for two things: detecting blocked apps and reading the address bar of supported browsers for the adult-website filter. Complete the declaration in App content and keep it consistent with the in-app disclosure (`lib/features/app_blocker/presentation/app_selection_screen.dart`) and the store description paragraph.
+- [ ] **Package visibility (`QUERY_ALL_PACKAGES`)** — Needed to list installed apps for the blocker. Declare the use case in App content.
 - [ ] **Content rating** questionnaire — Complete honestly (likely “Everyone” or low maturity for self-help).
 - [ ] **Target audience** & **News apps** (if applicable) — Answer as required.
 - [ ] **Advertising ID** — Declare if you use ads (this project has no ad SDK by default).

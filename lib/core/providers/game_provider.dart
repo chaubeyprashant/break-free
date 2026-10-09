@@ -12,6 +12,8 @@ class GameProvider extends ChangeNotifier {
 
   UserProgress get progress => _progress;
 
+  Future<void> reloadFromDisk() => _loadProgress();
+
   Future<void> _loadProgress() async {
     _progress = await _repository.getProgress();
     notifyListeners();

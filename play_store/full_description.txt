@@ -1,14 +1,35 @@
-Break Free helps you build better habits with a calm, gamified experience—so progress feels motivating, not punishing.
+Break Free: Gamified Habit Tracker & App Blocker
 
-WHAT YOU GET
+Ready to quit bad habits, reduce screen time, and build a productive daily routine? Break Free is your gamified habit tracker, app blocker, and digital detox coach — built to help you overcome distractions, track what matters, and grow daily streaks without the guilt.
 
-• Habit tracking — Add habits, check in on clean days, and grow day streaks.
-• Streak protection — Weekly Freeze and a Streak Shield (from Level 3) so you can recover without losing everything after one slip.
-• Levels & rewards — Earn XP and coins, unlock titles from Beginner to Hero of Break Free.
-• Milestones — Celebrate 3, 7, 14, 30+ day streaks with clear next goals.
-• Relapse support — Log triggers when you slip; optional confirmation before resetting a streak.
-• Panic button — Fast access when you need grounding in the moment.
-• Mind City — Watch your city grow as you level up.
-• Journal — Space for reflection.
+Whether you want to stop doom scrolling, block distracting apps, stay focused while studying, or build positive daily habits, Break Free gives you structure and encouragement. Track progress, earn rewards, and if you slip, get back on track with streak protection.
 
-Break Free is designed for self-improvement and mindfulness. It is not a substitute for professional medical or mental health care.
+WHAT YOU CAN DO WITH BREAK FREE
+
+• Habit Tracker & Routine Planner — Add daily habits, check in on clean days, and see day streaks at a glance to stay motivated on your self-improvement journey.
+• App Blocker & Focus Tools (Android) — Reduce screen time by interrupting apps you choose to block. Adult website filtering reads the address bar of supported browsers only (not a DNS or VPN filter, and not every browser).
+• Streak Protection & Saver — Relapse happens. Use a weekly Freeze or a Streak Shield (unlocked at Level 3) so one rough day doesn’t erase your progress.
+• Gamification, Levels & Rewards — Earn XP and coins for check-ins and wins. Level up and unlock titles from Beginner to Hero of Break Free.
+• Milestones & Goal Tracker — Clear goals at 3, 7, 14, and 30+ days so personal growth and dopamine detox progress feel visible.
+• Relapse & Trigger Tracking — If you slip, log what triggered you. Confirm before resetting a streak so the choice stays mindful.
+• Panic Button for Cravings — Quick access to a 90-second breathing / urge-surfing session when you need help in the moment.
+• Mind City Builder — Watch your virtual Mind City grow as you level up and stick to your daily planner.
+• Mindfulness Journal & Mood Tracker — Reflect, track mood, and review on-device insights from your activity.
+• Cloud Backup (signed in) — Optionally save progress to your account so reinstalling doesn’t wipe habits and streaks.
+• Accountability Companion (Premium) — Link someone you trust for short accountability alerts — not your full browsing history.
+
+WHO IT’S FOR
+
+Break Free is a productivity app and habit coach for anyone seeking structure, focus, and accountability:
+• People trying to quit addictions, stop scrolling, or break bad habits.
+• Students and professionals who need a focus timer, study app, or app blocker to improve concentration.
+• Anyone looking for a gamified routine planner, ADHD organizer, or daily tracker for structure (not a medical treatment).
+• Anyone who wants to build positive habits, practice self-care, and support personal growth.
+
+IMPORTANT DISCLAIMER
+Break Free supports self-improvement, productivity, and mindfulness. It is not a medical or mental health treatment and does not diagnose or treat ADHD or addiction. For emergencies, contact local emergency services or a qualified professional.
+
+ACCESSIBILITY SERVICE DISCLOSURE
+Break Free uses the AccessibilityService API for its App & Web Blocker. It is used only to detect when you open an app you chose to block, and to read the address bar of supported browsers (Chrome, Brave, Edge, Samsung Internet, Firefox, Opera, DuckDuckGo, Vivaldi, Kiwi) for adult / custom domain matching. Processing runs on your device. Web addresses and screen content are never stored or uploaded for advertising. If you link an accountability companion, they may receive short summaries (for example that a blocked app was intercepted) — not full browsing history. Unlisted browsers, in-app WebViews, and DNS-level filtering are not covered.
+
+Take control of your time, block distractions, and Break Free today.

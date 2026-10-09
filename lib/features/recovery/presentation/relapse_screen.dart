@@ -4,8 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:break_free/core/providers/habit_provider.dart';
 import 'package:break_free/core/providers/game_provider.dart';
+import 'package:break_free/core/providers/journal_provider.dart';
 import 'package:break_free/core/providers/streak_policy_provider.dart';
 import 'package:break_free/core/models/habit.dart';
+import 'package:break_free/core/theme/bf_colors.dart';
+import 'package:break_free/core/theme/bf_spacing.dart';
+import 'package:break_free/core/widgets/bf_components.dart';
 
 class RelapseScreen extends StatefulWidget {
   final String? habitId;
@@ -29,61 +33,52 @@ class _RelapseScreenState extends State<RelapseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
+      backgroundColor: BfColors.ink,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(BfSpacing.xl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 32),
-              Icon(
-                Icons.broken_image_outlined,
-                size: 72,
-                color: Colors.white24,
-              )
-                  .animate()
-                  .fadeIn(duration: 400.ms)
-                  .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1), curve: Curves.easeOutBack),
-              const SizedBox(height: 24),
+              const SizedBox(height: BfSpacing.xxl),
               Text(
-                'It happens.',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.5,
+                'What happened?',
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      color: BfColors.textPrimaryDark,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.4,
                     ),
                 textAlign: TextAlign.center,
-              ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
-              const SizedBox(height: 12),
+              ).animate().fadeIn(duration: 200.ms),
+              const SizedBox(height: BfSpacing.sm),
               Text(
-                'A slip doesn\'t erase your progress. It\'s just a stumble on the journey.',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70, height: 1.4),
+                'Understanding the trigger helps you prepare for next time.',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: BfColors.textSecondaryDark,
+                      height: 1.45,
+                    ),
                 textAlign: TextAlign.center,
-              ).animate().fadeIn(delay: 200.ms),
-              const SizedBox(height: 40),
-              Text(
-                'What triggered you?',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 16),
+              ).animate().fadeIn(delay: 80.ms),
+              const SizedBox(height: BfSpacing.xxxl),
+              const BfSectionLabel('Trigger'),
+              const SizedBox(height: BfSpacing.md),
               Wrap(
-                spacing: 10,
-                runSpacing: 10,
+                spacing: BfSpacing.sm,
+                runSpacing: BfSpacing.sm,
                 children: _commonTriggers.map((trigger) {
                   final isSelected = _selectedTrigger == trigger;
                   return Material(
-                    color: isSelected ? const Color(0xFF238636) : Colors.white.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(20),
+                    color: isSelected ? BfColors.accent : BfColors.inkSoft,
+                    borderRadius: BorderRadius.circular(BfRadius.md),
                     child: InkWell(
                       onTap: () => setState(() => _selectedTrigger = isSelected ? null : trigger),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(BfRadius.md),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: BfSpacing.md, vertical: BfSpacing.sm),
                         child: Text(
                           trigger,
                           style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.white70,
+                            color: isSelected ? BfColors.textPrimaryDark : BfColors.textSecondaryDark,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                           ),
                         ),
@@ -94,24 +89,15 @@ class _RelapseScreenState extends State<RelapseScreen> {
               ),
               const Spacer(),
               _buildProtectionOptions(context),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _selectedTrigger == null
-                    ? null
-                    : () => _onLogRelapse(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  minimumSize: const Size(double.infinity, 54),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
-                ),
-                child: const Text('Log slip & restart'),
+              const SizedBox(height: BfSpacing.md),
+              BfPrimaryButton(
+                label: 'Continue recovery',
+                onPressed: _selectedTrigger == null ? null : () => _onLogRelapse(context),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: BfSpacing.xs),
               TextButton(
                 onPressed: () => context.pop(),
-                child: Text('Cancel', style: TextStyle(color: Colors.white54, fontSize: 16)),
+                child: const Text('Cancel', style: TextStyle(color: BfColors.textTertiaryDark)),
               ),
             ],
           ),
@@ -140,23 +126,23 @@ class _RelapseScreenState extends State<RelapseScreen> {
           children: [
             Text(
               'Protect your $streakDays day streak',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.white70),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(color: BfColors.textSecondaryDark),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: BfSpacing.sm),
             if (canFreeze)
               _ProtectionChip(
                 icon: Icons.ac_unit_rounded,
                 label: 'Use freeze (${policyProvider.freezesRemaining} left this week)',
                 onTap: () => _useProtection(context, useFreeze: true),
               ),
-            if (canFreeze && canShield) const SizedBox(height: 8),
+            if (canFreeze && canShield) const SizedBox(height: BfSpacing.xs),
             if (canShield)
               _ProtectionChip(
                 icon: Icons.shield_rounded,
                 label: 'Use streak shield (Level $level)',
                 onTap: () => _useProtection(context, useShield: true),
               ),
-            const SizedBox(height: 16),
+            const SizedBox(height: BfSpacing.md),
           ],
         ).animate().fadeIn().slideY(begin: 0.1, end: 0);
       },
@@ -171,9 +157,9 @@ class _RelapseScreenState extends State<RelapseScreen> {
       final ok = await policyProvider.useFreeze();
       if (context.mounted && ok) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Freeze used. Your streak is safe.'),
-            backgroundColor: const Color(0xFF238636),
+          const SnackBar(
+            content: Text('Freeze used. Your streak is safe.'),
+            backgroundColor: BfColors.success,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -183,9 +169,9 @@ class _RelapseScreenState extends State<RelapseScreen> {
       final ok = await policyProvider.useShield(gameProvider.progress.level);
       if (context.mounted && ok) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Shield used. Streak protected.'),
-            backgroundColor: const Color(0xFF1F6FEB),
+          const SnackBar(
+            content: Text('Shield used. Streak protected.'),
+            backgroundColor: BfColors.accent,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -208,24 +194,24 @@ class _RelapseScreenState extends State<RelapseScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF161B22),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
+        backgroundColor: BfColors.inkElevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BfRadius.lg)),
+        title: const Text(
           'Reset streak?',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(color: BfColors.textPrimaryDark, fontWeight: FontWeight.w600),
         ),
         content: Text(
           'This will reset your $streakDays day streak for this habit. You can\'t undo this.',
-          style: TextStyle(color: Colors.white70, height: 1.4),
+          style: const TextStyle(color: BfColors.textSecondaryDark, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: TextStyle(color: Colors.white70)),
+            child: const Text('Cancel', style: TextStyle(color: BfColors.textSecondaryDark)),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: BfColors.danger),
             child: const Text('Yes, log slip'),
           ),
         ],
@@ -238,9 +224,21 @@ class _RelapseScreenState extends State<RelapseScreen> {
       await habitProvider.logRelapse(habitId);
     }
     if (context.mounted) {
+      try {
+        await context.read<JournalProvider>().create(
+              note: 'Slip logged from relapse screen.',
+              moodRating: 2.0,
+              urgeIntensity: 0,
+              triggers: _selectedTrigger == null ? const [] : [_selectedTrigger!],
+              isRelapse: true,
+              habitId: habitId,
+            );
+      } catch (_) {}
+    }
+    if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Logged. Let\'s start fresh.'),
+        const SnackBar(
+          content: Text('Logged. Let\'s start fresh.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -259,21 +257,25 @@ class _ProtectionChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withOpacity(0.06),
-      borderRadius: BorderRadius.circular(14),
+      color: BfColors.inkSoft,
+      borderRadius: BorderRadius.circular(BfRadius.md),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(BfRadius.md),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: BfSpacing.md, vertical: BfSpacing.md),
           child: Row(
             children: [
-              Icon(icon, color: const Color(0xFF58A6FF), size: 22),
-              const SizedBox(width: 12),
+              Icon(icon, color: BfColors.accent, size: 22),
+              const SizedBox(width: BfSpacing.sm),
               Expanded(
                 child: Text(
                   label,
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 14),
+                  style: const TextStyle(
+                    color: BfColors.textPrimaryDark,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ],

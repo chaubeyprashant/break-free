@@ -11,11 +11,23 @@ class StreakPolicyProvider extends ChangeNotifier {
   }
 
   StreakPolicy get policy => _policy;
-  bool get canUseFreeze => _policy.canUseFreeze;
-  bool canUseShieldAtLevel(int level) => _policy.canUseShieldAtLevel(level);
+
+  /// Optional Premium-aware caps. Defaults keep legacy free limits.
+  int freezeCap = StreakPolicy.freezesPerWeek;
+  int shieldCap = StreakPolicy.shieldsPerWeek;
+
+  bool get canUseFreeze => _policy.canUseFreezeWithCap(freezeCap);
+  bool canUseShieldAtLevel(int level) => _policy.canUseShieldAtLevelWithCap(level, shieldCap);
   int get freezesUsedThisWeek => _policy.freezesUsedThisWeek;
-  int get freezesRemaining => StreakPolicy.freezesPerWeek - _policy.freezesUsedThisWeek;
-  int get shieldsRemaining => StreakPolicy.shieldsPerWeek - _policy.shieldsUsedThisWeek;
+  int get freezesRemaining => (freezeCap - _policy.freezesUsedThisWeek).clamp(0, freezeCap);
+  int get shieldsRemaining => (shieldCap - _policy.shieldsUsedThisWeek).clamp(0, shieldCap);
+
+  void applyCaps({required int freezesPerWeek, required int shieldsPerWeek}) {
+    if (freezeCap == freezesPerWeek && shieldCap == shieldsPerWeek) return;
+    freezeCap = freezesPerWeek;
+    shieldCap = shieldsPerWeek;
+    notifyListeners();
+  }
 
   Future<void> _load() async {
     _policy = await _repository.get();
@@ -24,7 +36,7 @@ class StreakPolicyProvider extends ChangeNotifier {
 
   /// Use a freeze (does not log relapse). Caller should not call habitProvider.logRelapse.
   Future<bool> useFreeze() async {
-    if (!_policy.canUseFreeze) return false;
+    if (!_policy.canUseFreezeWithCap(freezeCap)) return false;
     _policy = StreakPolicy(
       freezeUsedDates: [..._policy.freezeUsedDates, DateTime.now()],
       shieldUsedDates: _policy.shieldUsedDates,
@@ -36,7 +48,7 @@ class StreakPolicyProvider extends ChangeNotifier {
 
   /// Use streak shield (level 3+). Caller should not log relapse.
   Future<bool> useShield(int currentLevel) async {
-    if (!_policy.canUseShieldAtLevel(currentLevel)) return false;
+    if (!_policy.canUseShieldAtLevelWithCap(currentLevel, shieldCap)) return false;
     _policy = StreakPolicy(
       freezeUsedDates: _policy.freezeUsedDates,
       shieldUsedDates: [..._policy.shieldUsedDates, DateTime.now()],

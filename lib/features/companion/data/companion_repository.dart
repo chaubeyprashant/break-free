@@ -100,6 +100,17 @@ class CompanionRepository {
         .snapshots();
   }
 
+  /// High-level protection accountability alert (no browsing content).
+  Future<void> syncProtectionAlert(String summary) async {
+    final uid = currentUserId;
+    if (uid == null) return;
+    await _db.collection('users').doc(uid).collection('relapses').add({
+      'habitTitle': summary,
+      'kind': 'protection_alert',
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
   // Sync a relapse to Firestore with Location!
   Future<void> syncRelapse(String habitTitle) async {
     final uid = currentUserId;

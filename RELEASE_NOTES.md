@@ -6,6 +6,21 @@
 
 ---
 
+## Version 1.1.5
+
+### App & Web Blocker
+
+- **Adult-website filter now works.** The accessibility service was not allowed to read window content, so the filter never triggered even though the app advertised it. The service can now read the address bar of Chrome, Brave, Edge, Vivaldi, Kiwi, Samsung Internet, Firefox, Firefox Focus, Opera, Opera Mini and DuckDuckGo. Other browsers are not covered, and the app says so.
+- **Interventions show after a cold start.** Opening a blocked app while Break Free was not running used to open the dashboard instead of the intervention screen.
+- **Companion notifications only when linked.** Blocked-app and adult-website events are sent to Firestore only if a companion is linked; otherwise nothing leaves the device.
+- **Accurate disclosure.** The accessibility disclosure and the system settings description now list exactly what is read, which browsers are covered, and what a linked companion receives.
+
+### Accountability
+
+- **Removed the unfinished SMS partner feature.** It never sent anything: its channel name did not match the native side and the SMS permission had already been dropped. Settings now leads to Companion Sync, which notifies a linked companion by push notification.
+
+---
+
 ## Version 1.0.0 (Initial release)
 
 **Break Free** – A gamified coach to help you build better habits and stay on track.
