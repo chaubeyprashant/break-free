@@ -14,24 +14,39 @@ class AuthRepository {
   }
 
   Future<UserCredential?> signInWithGoogle() async {
-    // Trigger the authentication flow
-    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-    
-    if (googleUser == null) {
-      return null; // The user canceled the sign-in
+    try {
+      print('=== GOOGLE SIGN IN START ===');
+      // Trigger the authentication flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
+      if (googleUser == null) {
+        print('=== GOOGLE SIGN IN CANCELED BY USER ===');
+        return null; // The user canceled the sign-in
+      }
+
+      print('=== GOOGLE SIGN IN ACCOUNT FETCHED: ${googleUser.email} ===');
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      print('=== GOOGLE AUTH DETAILS FETCHED ===');
+
+      // Create a new credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      print('=== FIREBASE SIGN IN IN PROGRESS ===');
+      // Once signed in, return the UserCredential
+      final result = await _auth.signInWithCredential(credential);
+      print('=== FIREBASE SIGN IN SUCCESS: ${result.user?.uid} ===');
+      return result;
+    } catch (e, stackTrace) {
+      print('=== GOOGLE SIGN IN EXCEPTION ===');
+      print('Error: $e');
+      print('Stacktrace: $stackTrace');
+      print('=================================');
+      rethrow;
     }
-
-    // Obtain the auth details from the request
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-    // Create a new credential
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-
-    // Once signed in, return the UserCredential
-    return await _auth.signInWithCredential(credential);
   }
 
   Future<void> signOut() async {
